@@ -17,26 +17,98 @@ data class Bloom(
     val blooms: MutableList<BloomBytes> = mutableListOf()
 )
 
-fun openBloom(path: String): Bloom {
-    println("path: $path")
-    val bloom = Bloom()
-    val file = File(path)
+class CheckAddress {
 
-    if (!file.exists()) throw IllegalArgumentException("Required bloom file ($path) missing")
-    bloom.file = RandomAccessFile(file, "r")
-    bloom.file!!.seek(34) // Skip the first 34 bytes (magic + hash)
-    val countBytes = ByteArray(4)
-    bloom.file!!.readFully(countBytes)
-    bloom.count = ByteBuffer.wrap(countBytes).order(ByteOrder.LITTLE_ENDIAN).int.toUInt()
-    println("Number of filters in file: ${bloom.count}")
+    fun openBloom(path: String): Bloom {
+        println("path: $path")
+        val bloom = Bloom()
+        val file = File(path)
 
-    for (i in 0 until bloom.count.toInt()) {
-        val bloomBytes = BloomBytes()
-        bloom.file!!.readFully(bloomBytes.bytes)
-        bloom.blooms.add(bloomBytes)
+        if (!file.exists()) throw IllegalArgumentException("Required bloom file ($path) missing")
+        bloom.file = RandomAccessFile(file, "r")
+        bloom.file!!.seek(34) // Skip the first 34 bytes (magic + hash)
+        val countBytes = ByteArray(4)
+        bloom.file!!.readFully(countBytes)
+        bloom.count = ByteBuffer.wrap(countBytes).order(ByteOrder.LITTLE_ENDIAN).int.toUInt()
+        println("Number of filters in file: ${bloom.count}")
+
+        for (i in 0 until bloom.count.toInt()) {
+            val bloomBytes = BloomBytes()
+            bloom.file!!.readFully(bloomBytes.bytes)
+            bloom.blooms.add(bloomBytes)
+        }
+
+        return bloom
     }
 
-    return bloom
+
+    fun main(hexString: String, bloomFile: String) {
+        val bloom = openBloom(bloomFile)
+        val byteArray = hexStringToByteArray(hexString)
+
+        //bloom.insertAddress(byteArray)
+
+        val isHit = bloom.isAddressInFilter(byteArray)
+        println("Address (${byteArray.joinToString(" ") { "%02x".format(it) }}) is in filter: $isHit")
+
+    }
+
+    fun hexStringToByteArray(hex: String): ByteArray {
+        val cleanHex = if (hex.startsWith("0x")) hex.substring(2) else hex
+        require(cleanHex.length % 2 == 0) { "Invalid hex string length." }
+
+        return ByteArray(cleanHex.length / 2) { i ->
+            ((Character.digit(cleanHex[i * 2], 16) shl 4) + Character.digit(cleanHex[i * 2 + 1], 16)).toByte()
+        }
+    }
+}
+
+fun addressToBits(address: ByteArray): IntArray {
+    require(address.size == 20) { "invalid address length" }
+    address.forEach { byte ->
+        print(byte.toInt().and(0xFF).toString(2).padStart(32, '0'))
+        print(" ")
+    }
+    val bits = IntArray(5)
+    for (i in 0 until 20 step 4) {
+        val bytes = address.copyOfRange(i, i + 4)
+        val byteBuffer = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN)
+        val segment = byteBuffer.int.toLong() and 0xFFFFFFFFL
+        println("i:$i, mod: $BLOOM_WIDTH_IN_BITS, binary: $segment, bits/4: ${(segment % BLOOM_WIDTH_IN_BITS).toInt()}")
+        bits[i / 4] = (segment % BLOOM_WIDTH_IN_BITS).toInt()
+        println("bits: ${bits.forEach { print("$it ") }}")
+    }
+
+    // Print the bits in a readable manner
+    println("Bloom bits:")
+    bits.forEach { integerValue ->
+        print(integerValue.toString(2).padStart(32, '0'))
+        print(" ")
+    }
+
+    return bits
+}
+
+fun Bloom.isAddressInFilter(address: ByteArray): Boolean {
+    val bits = addressToBits(address)
+    println("blooms#: ${blooms.size}")
+    for (bloomBytes in blooms) {
+        var isHit = true
+        for (bit in bits) {
+            val which = bit / 8
+            val whence = bit % 8
+            val index = BLOOM_WIDTH_IN_BYTES - which - 1
+            val mask = (1 shl whence).toByte()
+            if ((bloomBytes.bytes[index] and mask) == 0.toByte()) {
+                isHit = false
+                break
+            }
+        }
+        if (isHit) {
+            return true
+        }
+    }
+    return false
 }
 
 fun Bloom.insertAddress(address: ByteArray) {
@@ -61,65 +133,4 @@ fun Bloom.insertAddress(address: ByteArray) {
         blooms.add(BloomBytes())
         count++
     }
-}
-
-fun addressToBits(address: ByteArray): IntArray {
-    require(address.size == 20) { "Invalid address length." }
-
-    val bits = IntArray(5)
-    for (i in 0 until 5) {
-        val segment = ByteBuffer.wrap(address.copyOfRange(i * 4, i * 4 + 4)).order(ByteOrder.BIG_ENDIAN).int
-        bits[i] = segment % BLOOM_WIDTH_IN_BITS
-    }
-    return bits
-}
-
-fun main() {
-    // Example usage
-//    val bloom = openBloom("path/to/bloom/file")
-//    val bloom = openBloom("/Users/biafra/TrueblocksParser/QmR5XPnYuJuypCu8LzbWKki3i1DnfWZsgJF9JsqPWL2hCF.bloom")
-//    val bloom = openBloom("/Users/biafra/TrueblocksParser/QmQfn7HkkyjiipBMYvnoQExp7G26NVv17a1pJZyPGpVuf6.bloom")
-    val bloom = openBloom("/Users/biafra/TrueblocksParser/QmR5XPnYuJuypCu8LzbWKki3i1DnfWZsgJF9JsqPWL2hCF.bloom")
-    val address = ByteArray(20) // Example address
-    //val hexString = "0x1234567890abcdef1234567890abcdef12345678"
-    val hexString = "0xf95de6da218d9bf49626c04679d13a03b2c394ca" // 20783805 // 20782958
-    val byteArray = hexStringToByteArray(hexString)
-    println(byteArray.joinToString(" ") { "%02x".format(it) })
-    //bloom.insertAddress(address)
-
-    val isHit = bloom.isAddressInFilter(address)
-
-    println("Address is in filter: $isHit")
-}
-
-fun hexStringToByteArray(hex: String): ByteArray {
-    val cleanHex = if (hex.startsWith("0x")) hex.substring(2) else hex
-    require(cleanHex.length % 2 == 0) { "Invalid hex string length." }
-
-    return ByteArray(cleanHex.length / 2) { i ->
-        ((Character.digit(cleanHex[i * 2], 16) shl 4) + Character.digit(cleanHex[i * 2 + 1], 16)).toByte()
-    }
-}
-
-fun Bloom.isAddressInFilter(address: ByteArray): Boolean {
-    val bits = addressToBits(address)
-
-    for (bloomBytes in blooms) {
-        println("using filter ${bloomBytes.nInserted}")
-        var isHit = true
-        for (bit in bits) {
-            val which = bit / 8
-            val whence = bit % 8
-            val index = BLOOM_WIDTH_IN_BYTES - which - 1
-            val mask = (1 shl whence).toByte()
-            if ((bloomBytes.bytes[index] and mask) == 0.toByte()) {
-                isHit = false
-                break
-            }
-        }
-        if (isHit) {
-            return true
-        }
-    }
-    return false
 }

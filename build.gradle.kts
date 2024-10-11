@@ -24,6 +24,6 @@ kotlin {
 }
 
 application {
-//    mainClass.set("MainKt")
-    mainClass.set("CheckAddressKt")
+    mainClass.set("MainKt")
+//    mainClass.set("CheckAddressKt")
 }
