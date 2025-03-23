@@ -19,11 +19,10 @@ data class Bloom(
 
 class CheckAddress {
 
+    val bloom = Bloom()
     fun openBloom(path: String): Bloom {
         println("path: $path")
-        val bloom = Bloom()
         val file = File(path)
-
         if (!file.exists()) throw IllegalArgumentException("Required bloom file ($path) missing")
         bloom.file = RandomAccessFile(file, "r")
         bloom.file!!.seek(34) // Skip the first 34 bytes (magic + hash)
@@ -45,12 +44,15 @@ class CheckAddress {
     fun main(hexString: String, bloomFile: String) {
         val bloom = openBloom(bloomFile)
         val byteArray = hexStringToByteArray(hexString)
+        val address = Address(byteArray)
 
-        //bloom.insertAddress(byteArray)
+//        bloom.insertAddress(byteArray)
 
-        val isHit = bloom.isAddressInFilter(byteArray)
-        println("Address (${byteArray.joinToString(" ") { "%02x".format(it) }}) is in filter: $isHit")
+//        val isHit = bloom.isAddressInFilter(byteArray)
+//        println("---> Address (${byteArray.joinToString(" ") { "%02x".format(it) }}) is in filter: $isHit")
 
+        val isMember = isMember(address)
+        println("\n---> Address (${byteArray.joinToString(" ") { "%02x".format(it) }}) is in filter: $isMember")
     }
 
     fun hexStringToByteArray(hex: String): ByteArray {
@@ -60,6 +62,57 @@ class CheckAddress {
         return ByteArray(cleanHex.length / 2) { i ->
             ((Character.digit(cleanHex[i * 2], 16) shl 4) + Character.digit(cleanHex[i * 2 + 1], 16)).toByte()
         }
+    }
+
+    fun isMember(addr: Address): Boolean {
+        val whichBits = addressToBits(addr.bytes)
+        val headerSize = 38
+        val count = bloom.count
+        var offset = headerSize + 4 // the end of Count
+        for (j in 0 until count.toInt()) {
+
+            offset += 4 // Skip over NInserted
+            val tester = BitChecker(offset, whichBits)
+            if (isMember(tester)) {
+                println("return true (1)")
+                return true
+            }
+            offset += BLOOM_WIDTH_IN_BYTES
+        }
+        println("return false (2)")
+        return false
+    }
+
+    private fun isMember(tester: BitChecker): Boolean {
+        for (bit in tester.whichBits) {
+            tester.bit = bit
+            if (!isBitLit(tester)) {
+                println("return false (3)")
+                return false
+            }
+        }
+        println("return true (4)")
+        return true
+    }
+
+    private fun isBitLit(tester: BitChecker): Boolean {
+        val which = tester.bit / 8
+        val index = BLOOM_WIDTH_IN_BYTES - which - 1
+        val whence = tester.bit % 8
+        val mask = (1 shl whence).toByte()
+
+        val res: Byte
+        if (tester.bytes != null) {
+            // In some cases, we've already read the bytes into memory, so use them if they're here
+            val byt = tester.bytes!![index.toInt()]
+            res = (byt.toInt() and mask.toInt()).toByte()
+        } else {
+            bloom.file!!.seek((tester.offset + index).toLong())
+            val byt = bloom.file!!.readByte()
+            res = (byt.toInt() and mask.toInt()).toByte()
+        }
+
+        return res.toInt() != 0
     }
 }
 
@@ -133,4 +186,35 @@ fun Bloom.insertAddress(address: ByteArray) {
         blooms.add(BloomBytes())
         count++
     }
+}
+
+class BloomIsMember(private val file: RandomAccessFile, private val headerSize: Int, private val count: Int) {
+
+
+    private fun addressToBits(addr: Address): IntArray {
+        val slice = addr.bytes
+        if (slice.size != 20) {
+            throw IllegalArgumentException("Invalid address length.")
+        }
+
+        val bits = IntArray(5)
+        for (i in slice.indices step 4) {
+            val bytes = slice.copyOfRange(i, i + 4)
+            val res = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).int % BLOOM_WIDTH_IN_BITS
+            bits[i / 4] = res
+        }
+        return bits
+    }
+
+    companion object {
+        const val BLOOM_WIDTH_IN_BYTES = 256
+        const val BLOOM_WIDTH_IN_BITS = BLOOM_WIDTH_IN_BYTES * 8
+    }
+}
+
+data class Address(val bytes: ByteArray)
+
+class BitChecker(val offset: Int, val whichBits: IntArray) {
+    var bit: Int = 0
+    var bytes: ByteArray? = null
 }
