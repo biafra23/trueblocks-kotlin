@@ -7,32 +7,8 @@ import kotlin.test.assertTrue
 import kotlin.test.assertEquals
 
 class BloomTest {
-//    @Test
-//    fun testInsertAddress() {
-//        val bloom = Bloom()
-//        val address = Address(ByteArray(20) { it.toByte() })
-//        bloom.insertAddress(address)
-//        assertTrue { bloom.blooms.isNotEmpty() }
-//    }
 
-    @Test
-    fun testAddressToBits() {
-        val bloom = Bloom()
-        val address = Address(hexStringToByteArray("0371a82e4a9d0a4312f3ee2ac9c6958512891372"))
-        val bits = bloom.addressToBits(address)
-        assertTrue { bits.size == 5 }
-        assertEquals(bits, listOf(108590u, 854595u, 257578u, 431493u, 594802u))
-    }
-
-    @Test
-    fun testAddressToBits2() {
-        val bloom = Bloom()
-        val address = Address(hexStringToByteArray("3d493c51a916f86d6d1c04824b3a7431e61a3ca3"))
-        val bits = bloom.addressToBits(address)
-        assertTrue { bits.size == 5 }
-        assertEquals(bits, listOf(605265u, 456813u, 787586u, 685105u, 670883u))
-    }
-
+    // tests insertAddress, isBitLit, getStats, addressToBits and isMemberBytes
     @Test
     fun testBloom() {
         val tests = listOf(
@@ -113,6 +89,7 @@ class BloomTest {
             if (tt.insert) {
                 bloom.insertAddress(tt.addr)
             }
+            assertEquals(tt.bits, bloom.addressToBits(tt.addr)) // tests addressToBits
         }
 
         val expectedLit = listOf(
