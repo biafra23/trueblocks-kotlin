@@ -1,3 +1,5 @@
+import org.kethereum.model.Address
+import org.komputing.khex.decode
 import java.io.File
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
@@ -40,7 +42,7 @@ data class BloomHeader(
 class Bloom(
     var file: RandomAccessFile? = null,
     var sizeOnDisc: Long = 0,
-    var range: String = "",
+    var range: String = "",  // The range of blocks this bloom filter covers
     var headerSize: Long = 0,
     var header: BloomHeader? = null,
     var count: UInt = 0u,
@@ -102,7 +104,7 @@ class Bloom(
     }
 
     fun addressToBits(addr: Address): List<UInt> {
-        val slice = addr.bytes
+        val slice = decode(addr.hex)
         if (slice.size != 20) {
             throw IllegalArgumentException("Invalid address length")
         }
@@ -195,8 +197,6 @@ fun RandomAccessFile.readUInt(): UInt {
     read(buffer)
     return ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN).int.toUInt()
 }
-
-data class Address(val bytes: ByteArray)
 
 data class BloomStats(
     val nBlooms: ULong,
