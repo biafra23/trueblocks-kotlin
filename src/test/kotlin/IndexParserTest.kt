@@ -1,6 +1,7 @@
 import org.junit.jupiter.api.Test
 
 import org.junit.jupiter.api.Assertions.*
+import kotlin.test.assertNotNull
 
 class IndexParserTest {
 
@@ -10,6 +11,14 @@ class IndexParserTest {
         indexParser.parse(Util.loadResourceFile("007799261-007800000_QmQBf3PAoFfUaJZcsCQDj4iSziN56xmyaDiQGM12bTkWdE.index"))
 
         // assert....
+        val addressRecord = indexParser.addressRecords["0xfffc3ead0df70e9bbe805af463814c2e6de5ae79"]
+        assertNotNull(addressRecord)
+
+        println("addressRecord: $addressRecord")
+
+        assertEquals(1, addressRecord.appearances.size)
+        assertEquals(7799463u, addressRecord.appearances[0].blockNumber)
+        assertEquals(3u, addressRecord.appearances[0].txIndex)
     }
 
     @OptIn(ExperimentalUnsignedTypes::class)

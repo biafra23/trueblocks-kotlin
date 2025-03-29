@@ -44,8 +44,7 @@ class BloomParser {
                     HEADER_LENGTH + (addrIndex * ADDR_RECORD_LENGTH) + ADDR_RECORD_LENGTH
                 )
             )
-            val addr =
-                "0x${addrRecordBytes.sliceArray(IntRange(0, ADDR_LENGTH - 1)).joinToString("") { "%02x".format(it) }}"
+//            val addr = "0x${addrRecordBytes.sliceArray(IntRange(0, ADDR_LENGTH - 1)).joinToString("") { "%02x".format(it) }}"
             val offset = bytesToUInt(
                 addrRecordBytes.sliceArray(IntRange(ADDR_LENGTH, ADDR_LENGTH + ADDR_OFFSET_LENGTH)).toUByteArray()
             )

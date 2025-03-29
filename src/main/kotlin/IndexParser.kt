@@ -1,3 +1,4 @@
+import org.kethereum.model.Address
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -15,8 +16,11 @@ const val APP_BLOCKNUM_LENGTH = 4
 const val APP_TX_INDEX_LENGTH = 4
 const val APP_RECORD_LENGTH = APP_BLOCKNUM_LENGTH + APP_TX_INDEX_LENGTH
 
+
 @OptIn(ExperimentalUnsignedTypes::class)
 class IndexParser {
+    val addressRecords : HashMap<String, AddrRecord> = hashMapOf()
+
     fun parse(file: File) {
         // Read the binary data into a ByteArray
         val binaryData = file.readBytes()
@@ -32,14 +36,13 @@ class IndexParser {
         val nApps = fourBytesToUInt(
             binaryData.sliceArray(IntRange(MAGIC_LENGTH + HASH_LENGTH + N_ADDR_LENGTH, HEADER_LENGTH)).toUByteArray()
         )
-        val magic = binaryData.sliceArray(IntRange(0, MAGIC_LENGTH - 1))
-        val hash = binaryData.sliceArray(IntRange(MAGIC_LENGTH, MAGIC_LENGTH + HASH_LENGTH))
-        val header = Header(magic = magic, hash = hash, nAddr = nAddr, nApps = nApps)
-
-        println("header: $header")
+//        val magic = binaryData.sliceArray(IntRange(0, MAGIC_LENGTH - 1))
+//        val hash = binaryData.sliceArray(IntRange(MAGIC_LENGTH, MAGIC_LENGTH + HASH_LENGTH))
+//        val header = Header(magic = magic, hash = hash, nAddr = nAddr, nApps = nApps)
+//        println("header: $header")
 
         val appearanceTableStart = HEADER_LENGTH + (nAddr.toInt() * ADDR_RECORD_LENGTH)
-        println("appearanceTableStart: $appearanceTableStart")
+//        println("appearanceTableStart: $appearanceTableStart")
         var appOffset = 0
         for (addrIndex in 1..<nAddr.toInt()) {
             val addrRecordBytes = binaryData.sliceArray(
@@ -48,8 +51,6 @@ class IndexParser {
                     HEADER_LENGTH + (addrIndex * ADDR_RECORD_LENGTH) + ADDR_RECORD_LENGTH
                 )
             )
-            val addr =
-                "0x${addrRecordBytes.sliceArray(IntRange(0, ADDR_LENGTH - 1)).joinToString("") { "%02x".format(it) }}"
             val offset = fourBytesToUInt(
                 addrRecordBytes.sliceArray(IntRange(ADDR_LENGTH, ADDR_LENGTH + ADDR_OFFSET_LENGTH)).toUByteArray()
             )
@@ -88,8 +89,8 @@ class IndexParser {
                 count,
                 appearances = appearances
             )
-            println("addrRecord: $addrRecord")
-
+            //println("addrRecord: $addrRecord")
+            addressRecords[addrRecord.address.joinToString("", prefix = "0x") { "%02x".format(it) }] = addrRecord
         }
 
         println("Binary data read from file: ${binaryData.take(4).joinToString(" ") { "%02x".format(it) }}")
@@ -116,7 +117,7 @@ data class AddrRecord(
     var appearances: List<AppRecord>
 ) {
     override fun toString(): String {
-        return "AddrRecord(address=0x${address.joinToString("") { "%02x".format(it) }}, offset=$offset, count=$count), appearances: $appearances"
+        return "AddrRecord(address=0x${address.joinToString("", prefix = "0x") { "%02x".format(it) }}, offset=$offset, count=$count), appearances: $appearances"
     }
 
     override fun equals(other: Any?): Boolean {
