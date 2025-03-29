@@ -17,9 +17,9 @@ const val APP_RECORD_LENGTH = APP_BLOCKNUM_LENGTH + APP_TX_INDEX_LENGTH
 
 @OptIn(ExperimentalUnsignedTypes::class)
 class IndexParser {
-    fun parse(fileName: File) {
+    fun parse(file: File) {
         // Read the binary data into a ByteArray
-        val binaryData = fileName.readBytes()
+        val binaryData = file.readBytes()
 
         val nAddr = fourBytesToUInt(
             binaryData.sliceArray(
@@ -96,13 +96,15 @@ class IndexParser {
 
     }
 
-    @OptIn(ExperimentalUnsignedTypes::class)
-    fun fourBytesToUInt(bytes: UByteArray): UInt {
-        val byteBuffer = ByteBuffer.wrap(bytes.toByteArray())
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN)
+    companion object {
+        @OptIn(ExperimentalUnsignedTypes::class)
+        fun fourBytesToUInt(bytes: UByteArray): UInt {
+            val byteBuffer = ByteBuffer.wrap(bytes.toByteArray())
+            byteBuffer.order(ByteOrder.LITTLE_ENDIAN)
 
-        // Convert the bytes to an unsigned integer (UInt)
-        return byteBuffer.int.toUInt()
+            // Convert the bytes to an unsigned integer (UInt)
+            return byteBuffer.int.toUInt()
+        }
     }
 }
 

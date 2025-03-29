@@ -4,7 +4,7 @@ import java.io.File
 fun main(args: Array<String>) {
     println("args: $args")
     val indexParser = IndexParser()
-    indexParser.parse(File("./007799261-007800000_QmQBf3PAoFfUaJZcsCQDj4iSziN56xmyaDiQGM12bTkWdE.index"))
+    indexParser.parse(File("/Users/biafra/trueblocks-kotlin//007799261-007800000_QmQBf3PAoFfUaJZcsCQDj4iSziN56xmyaDiQGM12bTkWdE.index"))
 //   indexParser.parse(File("/Users/biafra/trueblocks-kotlin/020782939-020785534_QmePxCpxtCQSDVcGTbQaXNARQjs1Us2WH6tXvixQEqZjCG.index"))
 
     val bloomFileName = "./007799261-007800000_QmSCAPfekmwUG2UrC8tQzjfh3mRq9ns7515ookmwYuWaUq.bloom"
