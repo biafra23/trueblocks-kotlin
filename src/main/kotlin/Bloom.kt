@@ -1,5 +1,6 @@
 import org.kethereum.model.Address
 import org.komputing.khex.decode
+import org.komputing.khex.encode
 import java.io.File
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
@@ -43,29 +44,35 @@ class Bloom(
     var file: RandomAccessFile? = null,
     var sizeOnDisc: Long = 0,
     var range: String = "",  // The range of blocks this bloom filter covers
-    var headerSize: Long = 0,
+    var headerSize: Long = 34,
     var header: BloomHeader? = null,
     var count: UInt = 0u,
     var blooms: MutableList<BloomBytes> = mutableListOf()
 ) {
     companion object {
-        fun openBloom(path: String, check: Boolean): Bloom {
+        fun openBloom(file: File, check: Boolean): Bloom {
             val bloom = Bloom()
-            if (!File(path).exists()) {
-                throw IllegalArgumentException("Required bloom file ($path) missing")
+            if (!file.exists()) {
+                throw IllegalArgumentException("Required bloom file (${file.absolutePath}) missing")
             }
 
-            bloom.sizeOnDisc = File(path).length()
-            bloom.range = path // Simplified for this example
+            bloom.sizeOnDisc = file.length()
+            bloom.range = file.absolutePath // Simplified for this example
 
-            bloom.file = RandomAccessFile(path, "r")
+            bloom.file = RandomAccessFile(file, "r")
             bloom.file?.seek(0)
-            bloom.readHeader(check)
+            bloom.header = bloom.file?.readHeader()
+            println("header: ${bloom.header}")
 
             bloom.count = bloom.file?.readUInt() ?: 0u
-            bloom.blooms = MutableList(bloom.count.toInt()) { BloomBytes() }
-            bloom.file?.seek(bloom.headerSize)
-
+            println("range: ${bloom.range}")
+            println("count: ${bloom.count}")
+            bloom.blooms = MutableList(bloom.count.toInt()) {
+                BloomBytes()
+            }
+            bloom.blooms.forEach {
+                bloom.file?.readBloomBytes(it)
+            }
             return bloom
         }
     }
@@ -118,12 +125,6 @@ class Bloom(
         return bits
     }
 
-    private fun readHeader(check: Boolean) {
-        // Simplified for this example
-        header = BloomHeader(0u, "")
-        headerSize = 0
-    }
-
     fun getStats(): BloomStats {
         var nBlooms = 0uL
         var nInserted = 0uL
@@ -170,8 +171,8 @@ class Bloom(
         val whence = tester.bit.toInt() % 8
 
         val byt = tester.bytes[index]
-        val mask =  (1 shl whence).toByte()
-        val res =  byt and mask
+        val mask = (1 shl whence).toByte()
+        val res = byt and mask
 
 //        val bytString = byt.toInt().and(0xFF).toString(2).padStart(8, '0')
 //        val maskString = mask.toInt().and(0xFF).toString(2).padStart(8, '0')
@@ -190,6 +191,27 @@ class Bloom(
         }
         return true
     }
+}
+
+fun RandomAccessFile.readHeader(): BloomHeader {
+    val magic = readUShort()
+    val buffer = ByteArray(32)
+    read(buffer)
+    val hash = encode(buffer)
+    return BloomHeader(magic = magic, hash = hash)
+}
+
+fun RandomAccessFile.readBloomBytes(bloomBytes: BloomBytes) {
+    bloomBytes.nInserted = readUInt()
+    val buffer = ByteArray(BLOOM_WIDTH_IN_BYTES)
+    read(buffer)
+    bloomBytes.bytes = buffer
+}
+
+fun RandomAccessFile.readUShort(): UShort {
+    val buffer = ByteArray(2)
+    read(buffer)
+    return ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN).short.toUShort()
 }
 
 fun RandomAccessFile.readUInt(): UInt {

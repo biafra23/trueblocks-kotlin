@@ -2,8 +2,11 @@ package index
 
 import Bloom
 import org.kethereum.model.Address
+import java.io.File
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class BloomTest {
 
@@ -97,6 +100,28 @@ class BloomTest {
         }
     }
 
+    @Test
+    fun testOpenBloom() {
+        val bloomFileName = "007799261-007800000_QmSCAPfekmwUG2UrC8tQzjfh3mRq9ns7515ookmwYuWaUq.bloom"
+        val addressString = "0xfffc3ead0df70e9bbe805af463814c2e6de5ae79"
+
+        val bloom = Bloom.openBloom(loadResourceFile(bloomFileName), false)
+        val isMember = bloom.isMemberBytes(Address(addressString))
+        assertTrue(isMember)
+    }
+
+    @Test
+    fun testLoadResourceFile() {
+        val file = loadResourceFile("007799261-007800000_QmQBf3PAoFfUaJZcsCQDj4iSziN56xmyaDiQGM12bTkWdE.index")
+        assertContains(file.absolutePath, "007799261-007800000_QmQBf3PAoFfUaJZcsCQDj4iSziN56xmyaDiQGM12bTkWdE.index")
+        assertTrue { file.exists() }
+    }
+
+    fun loadResourceFile(fileName: String): File {
+        val resource = javaClass.getResource("/$fileName")
+        return File(resource.toURI())
+    }
+
     private fun ByteArray.toHexString(): String {
         return joinToString("") { "%02x".format(it) }
     }
@@ -108,11 +133,3 @@ class BloomTest {
     )
 }
 
-fun hexStringToByteArray(s: String): ByteArray {
-    val len = s.length
-    val data = ByteArray(len / 2)
-    for (i in 0 until len step 2) {
-        data[i / 2] = ((Character.digit(s[i], 16) shl 4) + Character.digit(s[i + 1], 16)).toByte()
-    }
-    return data
-}
