@@ -94,7 +94,7 @@ class IndexParser {
             addressRecords[addrRecord.address.joinToString("", prefix = "0x") { "%02x".format(it) }] = addrRecord
         }
 
-        println("Binary data read from file: ${binaryData.take(4).joinToString(" ") { "%02x".format(it) }}")
+        //println("Binary data read from file: ${binaryData.take(4).joinToString(" ") { "%02x".format(it) }}")
 
     }
 
@@ -118,7 +118,7 @@ data class AddrRecord(
     var appearances: List<AppRecord>
 ) {
     override fun toString(): String {
-        return "AddrRecord(address=0x${
+        return "AddrRecord(address=${
             address.joinToString(
                 "",
                 prefix = "0x"
@@ -150,7 +150,11 @@ data class AddrRecord(
 data class AppRecord(
     var blockNumber: UInt,
     var txIndex: UInt
-)
+) {
+    override fun toString(): String {
+        return "AppRecord(blockNumber=$blockNumber (0x${blockNumber.toString(16)}), txIndex=$txIndex (0x${txIndex.toString(16)}))"
+    }
+}
 
 data class Header(
     var magic: ByteArray,
