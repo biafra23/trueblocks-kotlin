@@ -33,9 +33,7 @@ class IndexParser {
                 )
             ).toUByteArray()
         )
-        val nApps = fourBytesToUInt(
-            binaryData.sliceArray(IntRange(MAGIC_LENGTH + HASH_LENGTH + N_ADDR_LENGTH, HEADER_LENGTH)).toUByteArray()
-        )
+//        val nApps = fourBytesToUInt(binaryData.sliceArray(IntRange(MAGIC_LENGTH + HASH_LENGTH + N_ADDR_LENGTH, HEADER_LENGTH)).toUByteArray())
 //        val magic = binaryData.sliceArray(IntRange(0, MAGIC_LENGTH - 1))
 //        val hash = binaryData.sliceArray(IntRange(MAGIC_LENGTH, MAGIC_LENGTH + HASH_LENGTH))
 //        val header = Header(magic = magic, hash = hash, nAddr = nAddr, nApps = nApps)

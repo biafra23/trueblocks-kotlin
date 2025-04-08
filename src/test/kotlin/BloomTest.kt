@@ -110,6 +110,16 @@ class BloomTest {
         assertTrue(isMember)
     }
 
+    @Test
+    fun testOpenBloom2() {
+        val bloomFileName = "QmQBf3PAoFfUaJZcsCQDj4iSziN56xmyaDiQGM12bTkWdE"
+        val addressString = "0xfffc3ead0df70e9bbe805af463814c2e6de5ae79"
+
+        val bloom = Bloom.openBloom(loadResourceFile(bloomFileName), false)
+        val isMember = bloom.isMemberBytes(Address(addressString))
+        assertTrue(isMember)
+    }
+
     private fun ByteArray.toHexString(): String {
         return joinToString("") { "%02x".format(it) }
     }
