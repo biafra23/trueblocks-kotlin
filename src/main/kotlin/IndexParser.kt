@@ -19,11 +19,14 @@ const val APP_RECORD_LENGTH = APP_BLOCKNUM_LENGTH + APP_TX_INDEX_LENGTH
 
 @OptIn(ExperimentalUnsignedTypes::class)
 class IndexParser {
-    val addressRecords : HashMap<String, AddrRecord> = hashMapOf()
+    val addressRecords: HashMap<String, AddrRecord> = hashMapOf()
 
     fun parse(file: File) {
-        // Read the binary data into a ByteArray
         val binaryData = file.readBytes()
+        parse(binaryData)
+    }
+
+    fun parse(binaryData: ByteArray) {
 
         val nAddr = fourBytesToUInt(
             binaryData.sliceArray(
@@ -115,7 +118,12 @@ data class AddrRecord(
     var appearances: List<AppRecord>
 ) {
     override fun toString(): String {
-        return "AddrRecord(address=0x${address.joinToString("", prefix = "0x") { "%02x".format(it) }}, offset=$offset, count=$count), appearances: $appearances"
+        return "AddrRecord(address=0x${
+            address.joinToString(
+                "",
+                prefix = "0x"
+            ) { "%02x".format(it) }
+        }, offset=$offset, count=$count), appearances: $appearances"
     }
 
     override fun equals(other: Any?): Boolean {
