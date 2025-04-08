@@ -9,11 +9,14 @@ private const val HEADER_LENGTH = MAGIC_LENGTH + HASH_LENGTH + COUNT_LENGTH
 private const val BLOOM_FILTER_LENGTH = 200000
 
 class BloomParser {
-    @OptIn(ExperimentalUnsignedTypes::class)
-    fun parse(fileName: File) {
-        // Read the binary data into a ByteArray
-        val binaryData = fileName.readBytes()
 
+    fun parse(fileName: File) {
+        val binaryData = fileName.readBytes()
+        parse(binaryData)
+    }
+
+    @OptIn(ExperimentalUnsignedTypes::class)
+    fun parse(binaryData: ByteArray) {
         val count = bytesToUInt(
             binaryData.sliceArray(
                 IntRange(
@@ -87,7 +90,7 @@ class BloomParser {
 
         }
 
-        println("Binary data read from file: ${binaryData.take(4).joinToString(" ") { "%02x".format(it) }}")
+        println("Binary data: ${binaryData.take(4).joinToString(" ") { "%02x".format(it) }}")
 
     }
 

@@ -4,7 +4,6 @@ import Bloom
 import Util.Companion.loadResourceFile
 import org.kethereum.model.Address
 import kotlin.test.Test
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -105,7 +104,7 @@ class BloomTest {
         val bloomFileName = "007799261-007800000_QmSCAPfekmwUG2UrC8tQzjfh3mRq9ns7515ookmwYuWaUq.bloom"
         val addressString = "0xfffc3ead0df70e9bbe805af463814c2e6de5ae79"
 
-        val bloom = Bloom.openBloom(loadResourceFile(bloomFileName), false)
+        val bloom = Bloom.openBloom(loadResourceFile(bloomFileName))
         val isMember = bloom.isMemberBytes(Address(addressString))
         assertTrue(isMember)
     }
@@ -115,7 +114,7 @@ class BloomTest {
         val bloomFileName = "QmQBf3PAoFfUaJZcsCQDj4iSziN56xmyaDiQGM12bTkWdE"
         val addressString = "0xfffc3ead0df70e9bbe805af463814c2e6de5ae79"
 
-        val bloom = Bloom.openBloom(loadResourceFile(bloomFileName), false)
+        val bloom = Bloom.openBloom(loadResourceFile(bloomFileName))
         val isMember = bloom.isMemberBytes(Address(addressString))
         assertTrue(isMember)
     }

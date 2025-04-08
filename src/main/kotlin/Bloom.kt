@@ -1,6 +1,7 @@
 import org.kethereum.model.Address
 import org.komputing.khex.decode
 import org.komputing.khex.encode
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
@@ -41,45 +42,45 @@ data class BloomHeader(
 )
 
 class Bloom(
-    var file: RandomAccessFile? = null,
     var sizeOnDisc: Long = 0,
-    var range: String = "",  // The range of blocks this bloom filter covers
-    var headerSize: Long = 34,
+    var range: String = "undefined",  // The range of blocks this bloom filter covers
+    var headerSize: Int = 34,
     var header: BloomHeader? = null,
     var count: UInt = 0u,
     var blooms: MutableList<BloomBytes> = mutableListOf()
 ) {
     companion object {
-        fun openBloom(file: File, check: Boolean): Bloom {
+
+        fun parseBloomBytes(bytes: ByteArray, size: Long): Bloom {
+            return parseBloomBytes(ByteArrayInputStream(bytes), size)
+        }
+
+        private fun parseBloomBytes(byteArrayInputStream: ByteArrayInputStream, size: Long): Bloom {
             val bloom = Bloom()
-            if (!file.exists()) {
-                throw IllegalArgumentException("Required bloom file (${file.absolutePath}) missing")
-            }
+            bloom.sizeOnDisc = size
+            bloom.range = "undefined" // can this be removed from Bloom or replaced with a true Range?
+            bloom.header = byteArrayInputStream.readHeader()
+            bloom.count = byteArrayInputStream.readUInt()
 
-            bloom.sizeOnDisc = file.length()
-            bloom.range = file.absolutePath // Simplified for this example
-
-            bloom.file = RandomAccessFile(file, "r")
-            bloom.file?.seek(0)
-            bloom.header = bloom.file?.readHeader()
-            println("header: ${bloom.header}")
-
-            bloom.count = bloom.file?.readUInt() ?: 0u
-            println("range: ${bloom.range}")
-            println("count: ${bloom.count}")
             bloom.blooms = MutableList(bloom.count.toInt()) {
                 BloomBytes()
             }
             bloom.blooms.forEach {
-                bloom.file?.readBloomBytes(it)
+                byteArrayInputStream.readBloomBytes(it)
             }
+
             return bloom
         }
-    }
 
-    fun close() {
-        file?.close()
-        file = null
+        fun openBloom(file: File): Bloom {
+
+            if (!file.exists()) {
+                throw IllegalArgumentException("Required bloom file (${file.absolutePath}) missing")
+            }
+
+            val bloom = parseBloomBytes(file.readBytes(), file.length())
+            return bloom
+        }
     }
 
     fun insertAddress(addr: Address) {
@@ -174,12 +175,6 @@ class Bloom(
         val mask = (1 shl whence).toByte()
         val res = byt and mask
 
-//        val bytString = byt.toInt().and(0xFF).toString(2).padStart(8, '0')
-//        val maskString = mask.toInt().and(0xFF).toString(2).padStart(8, '0')
-//        if (res != 0.toByte()) {
-//            println("+->: byt: $bytString mask: $maskString %9d\t${res != 0.toByte()}".format(res))
-//        }
-
         return res != 0.toByte()
     }
 
@@ -193,7 +188,7 @@ class Bloom(
     }
 }
 
-fun RandomAccessFile.readHeader(): BloomHeader {
+fun ByteArrayInputStream.readHeader(): BloomHeader {
     val magic = readUShort()
     val buffer = ByteArray(32)
     read(buffer)
@@ -201,20 +196,20 @@ fun RandomAccessFile.readHeader(): BloomHeader {
     return BloomHeader(magic = magic, hash = hash)
 }
 
-fun RandomAccessFile.readBloomBytes(bloomBytes: BloomBytes) {
+fun ByteArrayInputStream.readBloomBytes(bloomBytes: BloomBytes) {
     bloomBytes.nInserted = readUInt()
     val buffer = ByteArray(BLOOM_WIDTH_IN_BYTES)
     read(buffer)
     bloomBytes.bytes = buffer
 }
 
-fun RandomAccessFile.readUShort(): UShort {
+fun ByteArrayInputStream.readUShort(): UShort {
     val buffer = ByteArray(2)
     read(buffer)
     return ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN).short.toUShort()
 }
 
-fun RandomAccessFile.readUInt(): UInt {
+fun ByteArrayInputStream.readUInt(): UInt {
     val buffer = ByteArray(4)
     read(buffer)
     return ByteBuffer.wrap(buffer).order(ByteOrder.LITTLE_ENDIAN).int.toUInt()

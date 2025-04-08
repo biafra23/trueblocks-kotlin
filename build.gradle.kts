@@ -1,4 +1,5 @@
 plugins {
+//    id("org.jetbrains.kotlin.kapt") version "1.9.0"
     kotlin("jvm") version "1.9.0"
     application
 }
@@ -21,6 +22,11 @@ dependencies {
     implementation("com.github.komputing.kethereum:model:0.86.0")
     implementation("com.github.komputing.khex:core:1.1.2")
     implementation("com.github.komputing.khex:extensions:1.1.2")
+
+    implementation("com.squareup.okhttp3:okhttp:4.2.2")
+    implementation("com.squareup.moshi:moshi:1.9.1")
+    implementation("com.squareup.moshi:moshi-kotlin:1.9.1")
+//    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.1")
 }
 
 tasks.test {
