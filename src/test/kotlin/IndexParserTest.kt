@@ -135,13 +135,12 @@ class IndexParserTest {
 
     @Test
     fun testShouldNotFindAppearance() {
-
+        // Regression for bug in binarySearch
         val ipfsHttpClient = IpfsHttpClient()
         val appearances =
             ipfsHttpClient.fetchIndex("QmPoU3zot1LNTUYomGER3ykLJZGcxPui8g17WQu9a3zsQA", false)
                 ?.findAppearances("0x308686553a1EAC2fE721Ac8B814De638975a276e".lowercase()) // Block Range: 002683121-002690830
 
-        println(appearances)
         assertNotNull(appearances)
         assertEquals(0, appearances.size)
 
@@ -149,15 +148,13 @@ class IndexParserTest {
 
     @Test
     fun testShouldNotFindAppearance2() {
-
+        // Regression for bug in binarySearch
         val ipfsHttpClient = IpfsHttpClient()
         val appearances =
             ipfsHttpClient.fetchIndex("QmR9HbMRygR1UDjd6FLeR4UDWM3MrWjSxBNSdRY1pLKVvQ", false)
                 ?.findAppearances("0x308686553a1EAC2fE721Ac8B814De638975a276e".lowercase()) // Block Range: 007440360-007446883
 
-        println(appearances)
         assertNotNull(appearances)
         assertEquals(0, appearances.size)
-
     }
 }

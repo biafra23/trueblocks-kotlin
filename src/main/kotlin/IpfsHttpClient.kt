@@ -87,7 +87,7 @@ class IpfsHttpClient {
 
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
-                println("Request failed: ${response.code} ${response.message}")
+                println("Request ($request) failed: ${response.code} ${response.message}")
                 return null
             }
             response.body?.let { body ->
