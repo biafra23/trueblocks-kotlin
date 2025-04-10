@@ -1,4 +1,3 @@
-import org.kethereum.model.Address
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -32,76 +31,83 @@ class IndexParser {
             binaryData.sliceArray(
                 IntRange(
                     MAGIC_LENGTH + HASH_LENGTH,
-                    MAGIC_LENGTH + HASH_LENGTH + N_ADDR_LENGTH
+                    MAGIC_LENGTH + HASH_LENGTH + N_ADDR_LENGTH - 1
                 )
             ).toUByteArray()
         )
-//        val nApps = fourBytesToUInt(binaryData.sliceArray(IntRange(MAGIC_LENGTH + HASH_LENGTH + N_ADDR_LENGTH, HEADER_LENGTH)).toUByteArray())
+        val nApps = fourBytesToUInt(
+            binaryData.sliceArray(IntRange(MAGIC_LENGTH + HASH_LENGTH + N_ADDR_LENGTH, HEADER_LENGTH - 1))
+                .toUByteArray()
+        )
 //        val magic = binaryData.sliceArray(IntRange(0, MAGIC_LENGTH - 1))
-//        val hash = binaryData.sliceArray(IntRange(MAGIC_LENGTH, MAGIC_LENGTH + HASH_LENGTH))
+//        val hash = binaryData.sliceArray(IntRange(MAGIC_LENGTH, MAGIC_LENGTH + HASH_LENGTH - 1))
 //        val header = Header(magic = magic, hash = hash, nAddr = nAddr, nApps = nApps)
-//        println("header: $header")
 
         val appearanceTableStart = HEADER_LENGTH + (nAddr.toInt() * ADDR_RECORD_LENGTH)
-//        println("appearanceTableStart: $appearanceTableStart")
-        var appOffset = 0
-        for (addrIndex in 1..<nAddr.toInt()) {
-            val addrRecordBytes = binaryData.sliceArray(
+        for (addressIndex in 1..<nAddr.toInt()) {
+            val addressRecordBytes = binaryData.sliceArray(
                 IntRange(
-                    HEADER_LENGTH + (addrIndex * ADDR_RECORD_LENGTH),
-                    HEADER_LENGTH + (addrIndex * ADDR_RECORD_LENGTH) + ADDR_RECORD_LENGTH
+                    HEADER_LENGTH + (addressIndex * ADDR_RECORD_LENGTH),
+                    HEADER_LENGTH + (addressIndex * ADDR_RECORD_LENGTH) + ADDR_RECORD_LENGTH - 1
                 )
             )
-            val offset = fourBytesToUInt(
-                addrRecordBytes.sliceArray(IntRange(ADDR_LENGTH, ADDR_LENGTH + ADDR_OFFSET_LENGTH)).toUByteArray()
+            assert(addressRecordBytes.size == 28)
+
+            val addressBytes = addressRecordBytes.sliceArray(IntRange(0, ADDR_LENGTH - 1))
+            assert(addressBytes.size == 20)
+            val addressString = addressBytes.joinToString("", prefix = "0x") { "%02x".format(it) }
+
+            val appearancesOffset = fourBytesToUInt(
+                addressRecordBytes.sliceArray(IntRange(ADDR_LENGTH, ADDR_LENGTH + ADDR_OFFSET_LENGTH - 1))
             )
-            val count = fourBytesToUInt(
-                addrRecordBytes.sliceArray(IntRange(ADDR_LENGTH + ADDR_OFFSET_LENGTH, ADDR_RECORD_LENGTH))
-                    .toUByteArray()
+            val appearancesCount = fourBytesToUInt(
+                addressRecordBytes.sliceArray(IntRange(ADDR_LENGTH + ADDR_OFFSET_LENGTH, ADDR_RECORD_LENGTH - 1))
             )
 
-
-            appOffset += offset.toInt() * APP_RECORD_LENGTH
             val appearances = mutableListOf<AppRecord>()
-            for (countIndex in 0..<count.toInt()) {
+            for (countIndex in 0..<appearancesCount.toInt()) {
                 val blockNum = fourBytesToUInt(
                     binaryData.sliceArray(
                         IntRange(
-                            appearanceTableStart + (countIndex * APP_RECORD_LENGTH),
-                            appearanceTableStart + (countIndex * APP_RECORD_LENGTH) + APP_BLOCKNUM_LENGTH
+                            appearanceTableStart + (countIndex * APP_RECORD_LENGTH) + (appearancesOffset * APP_RECORD_LENGTH.toUInt()).toInt(),
+                            appearanceTableStart + (countIndex * APP_RECORD_LENGTH) + (appearancesOffset * APP_RECORD_LENGTH.toUInt()).toInt() + APP_BLOCKNUM_LENGTH - 1
                         )
-                    ).toUByteArray()
+                    )
                 )
                 val txIndex = fourBytesToUInt(
                     binaryData.sliceArray(
                         IntRange(
-                            appearanceTableStart + (countIndex * APP_RECORD_LENGTH) + APP_BLOCKNUM_LENGTH,
-                            appearanceTableStart + (countIndex * APP_RECORD_LENGTH) + APP_BLOCKNUM_LENGTH + APP_TX_INDEX_LENGTH
+                            appearanceTableStart + (countIndex * APP_RECORD_LENGTH) + (appearancesOffset * APP_RECORD_LENGTH.toUInt()).toInt() + APP_BLOCKNUM_LENGTH,
+                            appearanceTableStart + (countIndex * APP_RECORD_LENGTH) + (appearancesOffset * APP_RECORD_LENGTH.toUInt()).toInt() + APP_BLOCKNUM_LENGTH + APP_TX_INDEX_LENGTH - 1
                         )
-                    ).toUByteArray()
+                    )
                 )
-
                 appearances.add(AppRecord(blockNum, txIndex))
-                //println("----> block_num: $blockNum, tx_index: $txIndex")
             }
             val addrRecord = AddrRecord(
-                addrRecordBytes.sliceArray(IntRange(0, ADDR_LENGTH - 1)),
-                offset,
-                count,
+                addressBytes,
+                appearancesOffset,
+                appearancesCount,
                 appearances = appearances
             )
-            //println("addrRecord: $addrRecord")
-            addressRecords[addrRecord.address.joinToString("", prefix = "0x") { "%02x".format(it) }] = addrRecord
+            addressRecords[addressString] = addrRecord
         }
-
-        //println("Binary data read from file: ${binaryData.take(4).joinToString(" ") { "%02x".format(it) }}")
-
     }
 
     companion object {
         @OptIn(ExperimentalUnsignedTypes::class)
         fun fourBytesToUInt(bytes: UByteArray): UInt {
+            assert(bytes.size == 4)
             val byteBuffer = ByteBuffer.wrap(bytes.toByteArray())
+            byteBuffer.order(ByteOrder.LITTLE_ENDIAN)
+
+            // Convert the bytes to an unsigned integer (UInt)
+            return byteBuffer.int.toUInt()
+        }
+
+        fun fourBytesToUInt(bytes: ByteArray): UInt {
+            assert(bytes.size == 4)
+            val byteBuffer = ByteBuffer.wrap(bytes)
             byteBuffer.order(ByteOrder.LITTLE_ENDIAN)
 
             // Convert the bytes to an unsigned integer (UInt)
@@ -152,7 +158,11 @@ data class AppRecord(
     var txIndex: UInt
 ) {
     override fun toString(): String {
-        return "AppRecord(blockNumber=$blockNumber (0x${blockNumber.toString(16)}), txIndex=$txIndex (0x${txIndex.toString(16)}))"
+        return "AppRecord(blockNumber=$blockNumber (0x${blockNumber.toString(16)}), txIndex=$txIndex (0x${
+            txIndex.toString(
+                16
+            )
+        }))"
     }
 }
 
