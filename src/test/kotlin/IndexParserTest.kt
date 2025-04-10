@@ -6,9 +6,10 @@ import kotlin.test.assertNotNull
 class IndexParserTest {
 
     @Test
-    fun parse() {
-        val indexParser = IndexParser()
-        indexParser.parse(Util.loadResourceFile("007799261-007800000_QmQBf3PAoFfUaJZcsCQDj4iSziN56xmyaDiQGM12bTkWdE.index"))
+    fun parseToAddressRecords() {
+        val indexParser =
+            IndexParser(Util.loadResourceFile("007799261-007800000_QmQBf3PAoFfUaJZcsCQDj4iSziN56xmyaDiQGM12bTkWdE.index"))
+        indexParser.parseToAddressRecords()
 
         val addressRecord = indexParser.addressRecords["0xfffc3ead0df70e9bbe805af463814c2e6de5ae79"]
         assertNotNull(addressRecord)
@@ -19,10 +20,11 @@ class IndexParserTest {
     }
 
     @Test
-    fun parse2() {
+    fun parseToAddressRecords2() {
         val ipfsHttpClient = IpfsHttpClient()
         val addressToCheck = "0xfffc3ead0df70e9bbe805af463814c2e6de5ae79".lowercase()
-        val addressRecords = ipfsHttpClient.fetchIndex("QmckY96hpZ1yzC53gx4t7UXHicoqRE2UwwDi33v9aNBqGq")?.addressRecords
+        val addressRecords =
+            ipfsHttpClient.fetchIndex("QmckY96hpZ1yzC53gx4t7UXHicoqRE2UwwDi33v9aNBqGq")?.addressRecords
         assertNotNull(addressRecords)
 
         val addrRecord = addressRecords[addressToCheck]
@@ -33,7 +35,7 @@ class IndexParserTest {
     }
 
     @Test
-    fun testIndexParse() {
+    fun testIndexParseToAddressRecords() {
 
         val ipfsHttpClient = IpfsHttpClient()
 
@@ -52,7 +54,7 @@ class IndexParserTest {
     }
 
     @Test
-    fun testIndexParse2() {
+    fun testIndexParseToAddressRecords2() {
 
         val ipfsHttpClient = IpfsHttpClient()
 
@@ -73,7 +75,7 @@ class IndexParserTest {
     }
 
     @Test
-    fun testIndexParse3() {
+    fun testIndexParseToAddressRecords3() {
 
         val ipfsHttpClient = IpfsHttpClient()
 
@@ -100,5 +102,62 @@ class IndexParserTest {
         val result = IndexParser.fourBytesToUInt(ubyteArrayOf(0x01u, 0x02u, 0xffu, 0xffu))
 
         kotlin.test.assertEquals(4_294_902_273u, result)
+    }
+
+    @Test
+    fun testFindAppearances() {
+        val indexParser =
+            IndexParser(Util.loadResourceFile("007799261-007800000_QmQBf3PAoFfUaJZcsCQDj4iSziN56xmyaDiQGM12bTkWdE.index"))
+
+        val appearances = indexParser.findAppearances("0xfffc3ead0df70e9bbe805af463814c2e6de5ae79")
+
+        assertNotNull(appearances)
+        assertEquals(1, appearances.size)
+        assertEquals(7799984u, appearances[0].blockNumber)
+        assertEquals(33u, appearances[0].txIndex)
+    }
+
+    @Test
+    fun testFindAppearances2() {
+
+        val ipfsHttpClient = IpfsHttpClient()
+        val appearances =
+            ipfsHttpClient.fetchIndex("QmZgMXcP2V9dp8Jk11vJPmLGdDxsxD4QrNiC4JndBoPAkT", false)
+                ?.findAppearances("0x308686553a1EAC2fE721Ac8B814De638975a276e".lowercase())
+
+        assertNotNull(appearances)
+        assertEquals(2, appearances.size)
+        assertEquals(18867145u, appearances[0].blockNumber)
+        assertEquals(152u, appearances[0].txIndex)
+        assertEquals(18867170u, appearances[1].blockNumber)
+        assertEquals(41u, appearances[1].txIndex)
+    }
+
+    @Test
+    fun testShouldNotFindAppearance() {
+
+        val ipfsHttpClient = IpfsHttpClient()
+        val appearances =
+            ipfsHttpClient.fetchIndex("QmPoU3zot1LNTUYomGER3ykLJZGcxPui8g17WQu9a3zsQA", false)
+                ?.findAppearances("0x308686553a1EAC2fE721Ac8B814De638975a276e".lowercase()) // Block Range: 002683121-002690830
+
+        println(appearances)
+        assertNotNull(appearances)
+        assertEquals(0, appearances.size)
+
+    }
+
+    @Test
+    fun testShouldNotFindAppearance2() {
+
+        val ipfsHttpClient = IpfsHttpClient()
+        val appearances =
+            ipfsHttpClient.fetchIndex("QmR9HbMRygR1UDjd6FLeR4UDWM3MrWjSxBNSdRY1pLKVvQ", false)
+                ?.findAppearances("0x308686553a1EAC2fE721Ac8B814De638975a276e".lowercase()) // Block Range: 007440360-007446883
+
+        println(appearances)
+        assertNotNull(appearances)
+        assertEquals(0, appearances.size)
+
     }
 }

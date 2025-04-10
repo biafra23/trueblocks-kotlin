@@ -58,7 +58,7 @@ class BloomParser {
 
 
             appOffset += offset.toInt() * APP_RECORD_LENGTH
-            val appearances = mutableListOf<AppRecord>()
+            val appearances = mutableListOf<AppearanceRecord>()
             for (countIndex in 0..<count.toInt()) {
                 val blockNum = bytesToUInt(
                     binaryData.sliceArray(
@@ -77,16 +77,16 @@ class BloomParser {
                     ).toUByteArray()
                 )
 
-                appearances.add(AppRecord(blockNum, txIndex))
+                appearances.add(AppearanceRecord(blockNum, txIndex))
                 //println("----> block_num: $blockNum, tx_index: $txIndex")
             }
-            val addrRecord = AddrRecord(
+            val addressRecord = AddressRecord(
                 addrRecordBytes.sliceArray(IntRange(0, ADDR_LENGTH - 1)),
                 offset,
                 count,
                 appearances = appearances
             )
-            println("addrRecord: $addrRecord")
+            println("addrRecord: $addressRecord")
 
         }
 

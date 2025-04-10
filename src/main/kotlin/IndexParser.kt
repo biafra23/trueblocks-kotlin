@@ -17,16 +17,17 @@ const val APP_RECORD_LENGTH = APP_BLOCKNUM_LENGTH + APP_TX_INDEX_LENGTH
 
 
 @OptIn(ExperimentalUnsignedTypes::class)
-class IndexParser {
-    val addressRecords: HashMap<String, AddrRecord> = hashMapOf()
+class IndexParser(val binaryData: ByteArray) {
 
-    fun parse(file: File) {
-        val binaryData = file.readBytes()
-        parse(binaryData)
-    }
+    constructor(filename: File) : this(filename.readBytes())
+    constructor(filename: String) : this(File(filename).readBytes())
 
-    fun parse(binaryData: ByteArray) {
+    val addressRecords: HashMap<String, AddressRecord> = hashMapOf()
+    val header: Header
 
+    init {
+        val magic = binaryData.sliceArray(IntRange(0, MAGIC_LENGTH - 1))
+        val hash = binaryData.sliceArray(IntRange(MAGIC_LENGTH, MAGIC_LENGTH + HASH_LENGTH - 1))
         val nAddr = fourBytesToUInt(
             binaryData.sliceArray(
                 IntRange(
@@ -36,15 +37,51 @@ class IndexParser {
             ).toUByteArray()
         )
         val nApps = fourBytesToUInt(
-            binaryData.sliceArray(IntRange(MAGIC_LENGTH + HASH_LENGTH + N_ADDR_LENGTH, HEADER_LENGTH - 1))
+            binaryData.sliceArray(
+                IntRange(
+                    MAGIC_LENGTH + HASH_LENGTH + N_ADDR_LENGTH,
+                    HEADER_LENGTH - 1
+                )
+            )
                 .toUByteArray()
         )
-//        val magic = binaryData.sliceArray(IntRange(0, MAGIC_LENGTH - 1))
-//        val hash = binaryData.sliceArray(IntRange(MAGIC_LENGTH, MAGIC_LENGTH + HASH_LENGTH - 1))
-//        val header = Header(magic = magic, hash = hash, nAddr = nAddr, nApps = nApps)
+        header = Header(magic = magic, hash = hash, nAddr = nAddr, nApps = nApps)
+    }
 
-        val appearanceTableStart = HEADER_LENGTH + (nAddr.toInt() * ADDR_RECORD_LENGTH)
-        for (addressIndex in 1..<nAddr.toInt()) {
+    /**
+     * Use this to find appearances for a specific address.
+     */
+    fun findAppearances(address: String): List<AppearanceRecord> {
+        return findAddressRecord(address)?.appearances ?: emptyList()
+    }
+
+    fun findAddressRecord(addressToBeFound: String): AddressRecord? {
+        val appearanceTableStart = HEADER_LENGTH + (header.nAddr.toInt() * ADDR_RECORD_LENGTH)
+        val addressIndex = searchBinaryBlob(
+            header.nAddr.toInt()
+        ) { i ->
+            val addressRecordBytes = binaryData.sliceArray(
+                IntRange(
+                    HEADER_LENGTH + (i * ADDR_RECORD_LENGTH),
+                    HEADER_LENGTH + (i * ADDR_RECORD_LENGTH) + ADDR_RECORD_LENGTH - 1
+                )
+            )
+            assert(addressRecordBytes.size == 28)
+
+            val addressBytes = addressRecordBytes.sliceArray(IntRange(0, ADDR_LENGTH - 1))
+            assert(addressBytes.size == 20)
+            val addressString = addressBytes.joinToString("", prefix = "0x") { "%02x".format(it) }
+
+            when {
+                addressString < addressToBeFound -> -1
+                addressString > addressToBeFound -> 1
+                else -> 0
+            }
+        }
+
+        return if (addressIndex == header.nAddr.toInt()) {
+            null
+        } else {
             val addressRecordBytes = binaryData.sliceArray(
                 IntRange(
                     HEADER_LENGTH + (addressIndex * ADDR_RECORD_LENGTH),
@@ -55,16 +92,26 @@ class IndexParser {
 
             val addressBytes = addressRecordBytes.sliceArray(IntRange(0, ADDR_LENGTH - 1))
             assert(addressBytes.size == 20)
-            val addressString = addressBytes.joinToString("", prefix = "0x") { "%02x".format(it) }
+//            val addressString = addressBytes.joinToString("", prefix = "0x") { "%02x".format(it) }
 
             val appearancesOffset = fourBytesToUInt(
-                addressRecordBytes.sliceArray(IntRange(ADDR_LENGTH, ADDR_LENGTH + ADDR_OFFSET_LENGTH - 1))
+                addressRecordBytes.sliceArray(
+                    IntRange(
+                        ADDR_LENGTH,
+                        ADDR_LENGTH + ADDR_OFFSET_LENGTH - 1
+                    )
+                )
             )
             val appearancesCount = fourBytesToUInt(
-                addressRecordBytes.sliceArray(IntRange(ADDR_LENGTH + ADDR_OFFSET_LENGTH, ADDR_RECORD_LENGTH - 1))
+                addressRecordBytes.sliceArray(
+                    IntRange(
+                        ADDR_LENGTH + ADDR_OFFSET_LENGTH,
+                        ADDR_RECORD_LENGTH - 1
+                    )
+                )
             )
 
-            val appearances = mutableListOf<AppRecord>()
+            val appearances = mutableListOf<AppearanceRecord>()
             for (countIndex in 0..<appearancesCount.toInt()) {
                 val blockNum = fourBytesToUInt(
                     binaryData.sliceArray(
@@ -82,15 +129,95 @@ class IndexParser {
                         )
                     )
                 )
-                appearances.add(AppRecord(blockNum, txIndex))
+                appearances.add(AppearanceRecord(blockNum, txIndex))
             }
-            val addrRecord = AddrRecord(
+            AddressRecord(addressBytes, appearancesOffset, appearancesCount, appearances)
+        }
+    }
+
+    fun searchBinaryBlob(
+        n: Int,
+        compareElement: (Int) -> Int
+    ): Int {
+        var i = 0
+        var j = n
+        while (i < j) {
+            val h = (i + j).ushr(1) // avoid overflow when computing h
+            when (compareElement(h)) {
+                -1 -> i = h + 1 // Element is smaller, search in the right half
+                1 -> j = h // Element is greater, search in the left half
+                0 -> return h // Element found
+            }
+        }
+        return n
+    }
+
+    /**
+     * Parses the binary data to extract address records and their appearances.
+     * This method reads the binary data, extracts the address records, and populates the addressRecords map.
+     *
+     * This is optional and can be called after creating an instance of IndexParser. You can search for appearances without parsing the data.
+     *
+     */
+    fun parseToAddressRecords() {
+        val appearanceTableStart = HEADER_LENGTH + (header.nAddr.toInt() * ADDR_RECORD_LENGTH)
+        for (addressIndex in 1..<header.nAddr.toInt()) {
+            val addressRecordBytes = binaryData.sliceArray(
+                IntRange(
+                    HEADER_LENGTH + (addressIndex * ADDR_RECORD_LENGTH),
+                    HEADER_LENGTH + (addressIndex * ADDR_RECORD_LENGTH) + ADDR_RECORD_LENGTH - 1
+                )
+            )
+            assert(addressRecordBytes.size == 28)
+
+            val addressBytes = addressRecordBytes.sliceArray(IntRange(0, ADDR_LENGTH - 1))
+            assert(addressBytes.size == 20)
+            val addressString = addressBytes.joinToString("", prefix = "0x") { "%02x".format(it) }
+
+            val appearancesOffset = fourBytesToUInt(
+                addressRecordBytes.sliceArray(
+                    IntRange(
+                        ADDR_LENGTH,
+                        ADDR_LENGTH + ADDR_OFFSET_LENGTH - 1
+                    )
+                )
+            )
+            val appearancesCount = fourBytesToUInt(
+                addressRecordBytes.sliceArray(
+                    IntRange(
+                        ADDR_LENGTH + ADDR_OFFSET_LENGTH,
+                        ADDR_RECORD_LENGTH - 1
+                    )
+                )
+            )
+
+            val appearances = mutableListOf<AppearanceRecord>()
+            for (countIndex in 0..<appearancesCount.toInt()) {
+                val blockNum = fourBytesToUInt(
+                    binaryData.sliceArray(
+                        IntRange(
+                            appearanceTableStart + (countIndex * APP_RECORD_LENGTH) + (appearancesOffset * APP_RECORD_LENGTH.toUInt()).toInt(),
+                            appearanceTableStart + (countIndex * APP_RECORD_LENGTH) + (appearancesOffset * APP_RECORD_LENGTH.toUInt()).toInt() + APP_BLOCKNUM_LENGTH - 1
+                        )
+                    )
+                )
+                val txIndex = fourBytesToUInt(
+                    binaryData.sliceArray(
+                        IntRange(
+                            appearanceTableStart + (countIndex * APP_RECORD_LENGTH) + (appearancesOffset * APP_RECORD_LENGTH.toUInt()).toInt() + APP_BLOCKNUM_LENGTH,
+                            appearanceTableStart + (countIndex * APP_RECORD_LENGTH) + (appearancesOffset * APP_RECORD_LENGTH.toUInt()).toInt() + APP_BLOCKNUM_LENGTH + APP_TX_INDEX_LENGTH - 1
+                        )
+                    )
+                )
+                appearances.add(AppearanceRecord(blockNum, txIndex))
+            }
+            val addressRecord = AddressRecord(
                 addressBytes,
                 appearancesOffset,
                 appearancesCount,
                 appearances = appearances
             )
-            addressRecords[addressString] = addrRecord
+            addressRecords[addressString] = addressRecord
         }
     }
 
@@ -116,15 +243,15 @@ class IndexParser {
     }
 }
 
-data class IndexFile(val header: Header, val addrRecords: List<AddrRecord>)
-data class AddrRecord(
+data class IndexFile(val header: Header, val addressRecords: List<AddressRecord>)
+data class AddressRecord(
     var address: ByteArray,
     var offset: UInt,
     var count: UInt,
-    var appearances: List<AppRecord>
+    var appearances: List<AppearanceRecord>
 ) {
     override fun toString(): String {
-        return "AddrRecord(address=${
+        return "AddressRecord(address=${
             address.joinToString(
                 "",
                 prefix = "0x"
@@ -136,7 +263,7 @@ data class AddrRecord(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as AddrRecord
+        other as AddressRecord
 
         if (!address.contentEquals(other.address)) return false
         if (offset != other.offset) return false
@@ -153,7 +280,7 @@ data class AddrRecord(
     }
 }
 
-data class AppRecord(
+data class AppearanceRecord(
     var blockNumber: UInt,
     var txIndex: UInt
 ) {

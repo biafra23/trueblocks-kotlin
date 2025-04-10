@@ -14,10 +14,6 @@ val cache = Cache(cacheDirectory, cacheSize)
 
 
 class IpfsHttpClient {
-    init {
-
-    }
-
     // Interceptor to force cache usage
     val forceCacheInterceptor = Interceptor { chain ->
         var request = chain.request().newBuilder()
@@ -84,7 +80,7 @@ class IpfsHttpClient {
         return null
     }
 
-    fun fetchIndex(cid: String): IndexParser? {
+    fun fetchIndex(cid: String, parse: Boolean = true): IndexParser? {
         val request = Request.Builder()
             .url(ipfsBaseUrl + cid)
             .build()
@@ -96,9 +92,11 @@ class IpfsHttpClient {
             }
             response.body?.let { body ->
 
-                val indexParser = IndexParser()
                 val bytes = body.bytes()
-                indexParser.parse(bytes)
+                val indexParser = IndexParser(bytes)
+                if (parse) {
+                    indexParser.parseToAddressRecords()
+                }
 
                 return indexParser
             }
