@@ -2,10 +2,23 @@ plugins {
 //    id("org.jetbrains.kotlin.kapt") version "1.9.0"
     kotlin("jvm") version "1.9.0"
     application
+    id("maven-publish")
 }
 
-group = "com.jaeckel.trueblocks"
+group = "com.github.biafra23"
 version = "1.0-SNAPSHOT"
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenLocal") {
+            from(components["kotlin"])
+
+            groupId = "com.github.biafra23"
+            artifactId = "trueblocks"
+            version = "1.0-SNAPSHOT"
+        }
+    }
+}
 
 repositories {
     mavenCentral()
