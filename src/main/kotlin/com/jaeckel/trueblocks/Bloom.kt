@@ -1,3 +1,5 @@
+package com.jaeckel.trueblocks
+
 import org.kethereum.model.Address
 import org.komputing.khex.decode
 import org.komputing.khex.encode

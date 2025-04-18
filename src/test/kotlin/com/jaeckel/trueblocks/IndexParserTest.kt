@@ -1,9 +1,12 @@
+package com.jaeckel.trueblocks
+
 import org.junit.jupiter.api.Test
 
 import org.junit.jupiter.api.Assertions.*
 import kotlin.test.assertNotNull
 
 class IndexParserTest {
+    val ipfsBaseUrl = "https://ipfs.unchainedindex.io/ipfs/"
 
     @Test
     fun parseToAddressRecords() {

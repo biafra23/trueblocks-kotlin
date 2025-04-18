@@ -1,23 +1,25 @@
-import com.jaeckel.trueblocks.Bloom
-import com.jaeckel.trueblocks.IndexParser
+package com.jaeckel.trueblocks
+
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.Cache
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import java.io.File
-
+import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 // Define the cache directory and size (10 MB in this example)
 val cacheDirectory = File("cacheDir") // Replace with your desired directory
 const val cacheSize = 10L * 1024 * 1024 * 1024 // 1024 * 10 MB
 val cache = Cache(cacheDirectory, cacheSize)
 
-
-class IpfsHttpClient {
+class IpfsHttpClient(val ipfsBaseUrl: String = "https://ipfs.unchainedindex.io/ipfs/") :
+    IpfsClient {
     // Interceptor to force cache usage
-    val forceCacheInterceptor = Interceptor { chain ->
+    private val forceCacheInterceptor = Interceptor { chain ->
         var request = chain.request().newBuilder()
             .header("Cache-Control", "only-if-cached, max-stale=${Int.MAX_VALUE}")
             .build()
@@ -36,17 +38,21 @@ class IpfsHttpClient {
     }
 
     // Build the OkHttpClient with caching and the interceptor
-    val client = OkHttpClient.Builder()
+    val okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(120, TimeUnit.SECONDS)
+        .writeTimeout(15, TimeUnit.SECONDS)
+        .addInterceptor(RedirectLoggingInterceptor())
         .cache(cache)
         .addInterceptor(forceCacheInterceptor)
         .build()
 
-    fun fetchAndParseManifestUrl(url: String): ManifestResponse? {
+    override fun fetchAndParseManifestUrl(manifestCID: String): ManifestResponse? {
         val request = Request.Builder()
-            .url(url)
+            .url(ipfsBaseUrl  + manifestCID)
             .build()
-
-        client.newCall(request).execute().use { response ->
+        println("request: $request")
+        okHttpClient.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
                 println("Request failed: ${response.code} ${response.message}")
                 return null
@@ -60,12 +66,12 @@ class IpfsHttpClient {
         }
     }
 
-    fun fetchBloom(cid: String, range: String = "undefined"): Bloom? {
+    override fun fetchBloom(cid: String, range: String): Bloom? {
         val request = Request.Builder()
             .url(ipfsBaseUrl + cid)
             .build()
 
-        client.newCall(request).execute().use { response ->
+        okHttpClient.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
                 println("Request failed: ${response.code} ${response.message}")
                 return null
@@ -74,7 +80,7 @@ class IpfsHttpClient {
                 //println("body: $body")
                 val bytes = body.bytes()
                 val size = bytes.size.toLong()
-                val bloom = Bloom.Companion.parseBloomBytes(bytes, size)
+                val bloom = Bloom.parseBloomBytes(bytes, size)
                 bloom.range = range
                 return bloom
             }
@@ -82,12 +88,12 @@ class IpfsHttpClient {
         return null
     }
 
-    fun fetchIndex(cid: String, parse: Boolean = true): IndexParser? {
+    override fun fetchIndex(cid: String, parse: Boolean): IndexParser? {
         val request = Request.Builder()
             .url(ipfsBaseUrl + cid)
             .build()
 
-        client.newCall(request).execute().use { response ->
+        okHttpClient.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
                 println("Request ($request) failed: ${response.code} ${response.message}")
                 return null
@@ -104,5 +110,20 @@ class IpfsHttpClient {
             }
         }
         return null
+    }
+}
+
+class RedirectLoggingInterceptor : Interceptor {
+    @Throws(IOException::class)
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val request = chain.request()
+        val response = chain.proceed(request)
+
+        if (response.isRedirect) {
+            val redirectUrl = response.header("Location")
+            println("Redirect from ${request.url} to $redirectUrl")
+        }
+
+        return response
     }
 }

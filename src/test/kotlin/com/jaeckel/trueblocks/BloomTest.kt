@@ -1,7 +1,6 @@
-package index
+package com.jaeckel.trueblocks
 
-import Bloom
-import Util.Companion.loadResourceFile
+import com.jaeckel.trueblocks.Util.Companion.loadResourceFile
 import org.kethereum.model.Address
 import kotlin.test.Test
 import kotlin.test.assertEquals

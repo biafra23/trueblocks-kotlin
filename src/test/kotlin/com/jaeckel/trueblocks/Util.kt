@@ -1,3 +1,5 @@
+package com.jaeckel.trueblocks
+
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertContains

@@ -1,3 +1,5 @@
+package com.jaeckel.trueblocks
+
 data class ManifestResponse(
     val version: String,
     val chain: String,
