@@ -3,7 +3,6 @@ import org.komputing.khex.decode
 import org.komputing.khex.encode
 import java.io.ByteArrayInputStream
 import java.io.File
-import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.experimental.and

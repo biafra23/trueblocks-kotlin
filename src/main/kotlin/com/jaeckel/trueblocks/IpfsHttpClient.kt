@@ -1,3 +1,5 @@
+import com.jaeckel.trueblocks.Bloom
+import com.jaeckel.trueblocks.IndexParser
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.Cache
