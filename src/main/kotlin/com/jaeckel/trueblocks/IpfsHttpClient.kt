@@ -79,49 +79,60 @@ class IpfsHttpClient(val ipfsBaseUrl: String = "https://ipfs.unchainedindex.io/i
     }
 
     override fun fetchBloom(cid: String, range: String): Bloom? {
-        val request = Request.Builder()
-            .url(ipfsBaseUrl + cid)
-            .build()
+        try {
+            val request = Request.Builder()
+                .url(ipfsBaseUrl + cid)
+                .build()
 
-        okHttpClient.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                println("Request failed: ${response.code} ${response.message}")
-                return null
+            okHttpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    println("Request failed: ${response.code} ${response.message}")
+                    return null
+                }
+                response.body?.let { body ->
+                    //println("body: $body")
+                    val bytes = body.bytes()
+                    val size = bytes.size.toLong()
+                    val bloom = Bloom.parseBloomBytes(bytes, size)
+                    bloom.range = range
+                    return bloom
+                }
             }
-            response.body?.let { body ->
-                //println("body: $body")
-                val bytes = body.bytes()
-                val size = bytes.size.toLong()
-                val bloom = Bloom.parseBloomBytes(bytes, size)
-                bloom.range = range
-                return bloom
-            }
+            return null
+        } catch (e: Exception) {
+            println("Exception: ${e.message}")
+            return null
         }
-        return null
+
     }
 
     override fun fetchIndex(cid: String, parse: Boolean): IndexParser? {
-        val request = Request.Builder()
-            .url(ipfsBaseUrl + cid)
-            .build()
+        try {
+            val request = Request.Builder()
+                .url(ipfsBaseUrl + cid)
+                .build()
 
-        okHttpClient.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                println("Request ($request) failed: ${response.code} ${response.message}")
-                return null
-            }
-            response.body?.let { body ->
-
-                val bytes = body.bytes()
-                val indexParser = IndexParser(bytes)
-                if (parse) {
-                    indexParser.parseToAddressRecords()
+            okHttpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    println("Request ($request) failed: ${response.code} ${response.message}")
+                    return null
                 }
+                response.body?.let { body ->
 
-                return indexParser
+                    val bytes = body.bytes()
+                    val indexParser = IndexParser(bytes)
+                    if (parse) {
+                        indexParser.parseToAddressRecords()
+                    }
+
+                    return indexParser
+                }
             }
+            return null
+        } catch (e: Exception) {
+            println("Exception: ${e.message}")
+            return null
         }
-        return null
     }
 }
 

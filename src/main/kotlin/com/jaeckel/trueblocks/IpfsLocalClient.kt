@@ -42,21 +42,32 @@ class IpfsLocalClient(baseUrl: String = "http://127.0.0.1:5001/api/v0/") : IpfsC
 
     override fun fetchBloom(cid: String, range: String): Bloom? {
 //        println("fetchBloom: $cid")
+        try {
+            val bloomBytes = ipfs.get.catBytes(cid)
+            val bloom = Bloom.parseBloomBytes(bloomBytes, bloomBytes.size.toLong())
+            bloom.range = range
+            return bloom
+        } catch (e: Exception) {
+            println("Exception: ${e.message}")
+            return null
+        }
 
-        val bloomBytes = ipfs.get.catBytes(cid)
-        val bloom = Bloom.parseBloomBytes(bloomBytes, bloomBytes.size.toLong())
-        bloom.range = range
-        return bloom
     }
 
     override fun fetchIndex(cid: String, parse: Boolean): IndexParser? {
 //        println("fetchIndex: $cid")
-        val indexBytes = ipfs.get.catBytes(cid)
-        val indexParser = IndexParser(indexBytes)
-        if (parse) {
-            indexParser.parseToAddressRecords()
+        try {
+            val indexBytes = ipfs.get.catBytes(cid)
+            val indexParser = IndexParser(indexBytes)
+            if (parse) {
+                indexParser.parseToAddressRecords()
+            }
+            return indexParser
+        } catch (e: Exception) {
+            println("Exception: ${e.message}")
+            return null
         }
-        return indexParser
+
     }
 
     fun lastError() {
