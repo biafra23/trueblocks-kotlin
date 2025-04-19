@@ -7,6 +7,7 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.logging.HttpLoggingInterceptor
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -37,19 +38,25 @@ class IpfsHttpClient(val ipfsBaseUrl: String = "https://ipfs.unchainedindex.io/i
         }
     }
 
+    val loggingInterceptor = HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.BODY // Set the desired logging level
+    }
+
     // Build the OkHttpClient with caching and the interceptor
     val okHttpClient = OkHttpClient.Builder()
         .connectTimeout(5, TimeUnit.SECONDS)
         .readTimeout(120, TimeUnit.SECONDS)
         .writeTimeout(15, TimeUnit.SECONDS)
         .addInterceptor(RedirectLoggingInterceptor())
+        .addInterceptor(loggingInterceptor)
         .cache(cache)
         .addInterceptor(forceCacheInterceptor)
         .build()
 
+
     override fun fetchAndParseManifestUrl(manifestCID: String): ManifestResponse? {
         val request = Request.Builder()
-            .url(ipfsBaseUrl  + manifestCID)
+            .url(ipfsBaseUrl + manifestCID)
             .build()
         println("request: $request")
         okHttpClient.newCall(request).execute().use { response ->
