@@ -55,21 +55,26 @@ class IpfsHttpClient(val ipfsBaseUrl: String = "https://ipfs.unchainedindex.io/i
 
 
     override fun fetchAndParseManifestUrl(manifestCID: String): ManifestResponse? {
-        val request = Request.Builder()
-            .url(ipfsBaseUrl + manifestCID)
-            .build()
-        println("request: $request")
-        okHttpClient.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                println("Request failed: ${response.code} ${response.message}")
-                return null
-            }
-            val responseBody = response.body?.string() ?: return null
-            val moshi = Moshi.Builder()
-                .add(KotlinJsonAdapterFactory()) // Add support for Kotlin data classes
+        try {
+            val request = Request.Builder()
+                .url(ipfsBaseUrl + manifestCID)
                 .build()
-            val adapter = moshi.adapter(ManifestResponse::class.java)
-            return adapter.fromJson(responseBody)
+            println("request: $request")
+            okHttpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    println("Request failed: ${response.code} ${response.message}")
+                    return null
+                }
+                val responseBody = response.body?.string() ?: return null
+                val moshi = Moshi.Builder()
+                    .add(KotlinJsonAdapterFactory()) // Add support for Kotlin data classes
+                    .build()
+                val adapter = moshi.adapter(ManifestResponse::class.java)
+                return adapter.fromJson(responseBody)
+            }
+        } catch (e: Exception) {
+            println("Exception: ${e.message}")
+            return null
         }
     }
 

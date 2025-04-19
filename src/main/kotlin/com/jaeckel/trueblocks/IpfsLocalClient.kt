@@ -30,9 +30,14 @@ class IpfsLocalClient(baseUrl: String = "http://127.0.0.1:5001/api/v0/") : IpfsC
     }
 
     override fun fetchAndParseManifestUrl(manifestCID: String): ManifestResponse? {
-        val manifest = ipfs.get.cat(manifestCID)
-        val adapter = moshi.adapter(ManifestResponse::class.java)
-        return adapter.fromJson(manifest)
+        try {
+            val manifest = ipfs.get.cat(manifestCID)
+            val adapter = moshi.adapter(ManifestResponse::class.java)
+            return adapter.fromJson(manifest)
+        } catch (e: Exception) {
+            println("Exception: ${e.message}")
+            return null
+        }
     }
 
     override fun fetchBloom(cid: String, range: String): Bloom? {
@@ -47,7 +52,7 @@ class IpfsLocalClient(baseUrl: String = "http://127.0.0.1:5001/api/v0/") : IpfsC
     override fun fetchIndex(cid: String, parse: Boolean): IndexParser? {
 //        println("fetchIndex: $cid")
         val indexBytes = ipfs.get.catBytes(cid)
-        val indexParser= IndexParser(indexBytes)
+        val indexParser = IndexParser(indexBytes)
         if (parse) {
             indexParser.parseToAddressRecords()
         }
