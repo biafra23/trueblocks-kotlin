@@ -18,7 +18,7 @@ class IpfsLocalClient(baseUrl: String = "http://127.0.0.1:5001/api/v0/") : IpfsC
         .readTimeout(120, TimeUnit.SECONDS)
         .writeTimeout(15, TimeUnit.SECONDS)
         .addInterceptor(RedirectLoggingInterceptor())
-        .addInterceptor(loggingInterceptor)
+//        .addInterceptor(loggingInterceptor)
         .build()
     val moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory()) // Add support for Kotlin data classes
@@ -52,5 +52,23 @@ class IpfsLocalClient(baseUrl: String = "http://127.0.0.1:5001/api/v0/") : IpfsC
             indexParser.parseToAddressRecords()
         }
         return indexParser
+    }
+
+    fun lastError() {
+        val lastError = ipfs.lastError
+        if (lastError != null) {
+            println("Last error: ${lastError.Message}")
+        } else {
+            println("No errors")
+        }
+    }
+
+    fun stats() {
+        val stats = ipfs.stats
+        if (stats != null) {
+            println("Last error: ${stats.bandWidth()}")
+        } else {
+            println("No errors")
+        }
     }
 }
