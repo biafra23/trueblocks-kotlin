@@ -89,8 +89,8 @@ class IpfsLocalClient(baseUrl: String = "http://127.0.0.1:5001/api/v0/") : IpfsC
 
     fun swarmConnect(address: String) {
         when (val result = ipfs.swarm.connect(address)) {
-            is StringsResult.Success -> println("Connected to $address: ${result.result}")
-            is StringsResult.Failure -> println("Failed to connect to $address: ${result.errorMessage}")
+            is StringsResult.Success -> println("Connected to $address: [${result.result.Strings[0]}]")
+            is StringsResult.Failure -> println("Failed to connect to $address: [${result.errorMessage}]")
         }
     }
 
@@ -98,7 +98,7 @@ class IpfsLocalClient(baseUrl: String = "http://127.0.0.1:5001/api/v0/") : IpfsC
         when (val swarmPeersResult = ipfs.swarm.peers()) {
             is SwarmPeersResult.Success -> {
                 val peers = swarmPeersResult.peers
-                println("--> Connected peers: $peers")
+                println("--> Connected peers: ${peers}")
             }
 
             is SwarmPeersResult.Failure -> {
