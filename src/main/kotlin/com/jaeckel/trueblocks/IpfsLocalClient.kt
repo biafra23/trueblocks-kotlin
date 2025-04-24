@@ -4,6 +4,8 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.ipfs.kotlin.IPFS
 import io.ipfs.kotlin.IPFSConfiguration
+import io.ipfs.kotlin.commands.StringsResult
+import io.ipfs.kotlin.commands.SwarmPeersResult
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import java.util.concurrent.TimeUnit
@@ -81,10 +83,27 @@ class IpfsLocalClient(baseUrl: String = "http://127.0.0.1:5001/api/v0/") : IpfsC
 
     fun stats() {
         val stats = ipfs.stats
-        if (stats != null) {
-            println("Stats: ${stats.bandWidth()}")
-        } else {
-            println("No errors")
+        println("Stats: ${stats.bandWidth()}")
+
+    }
+
+    fun swarmConnect(address: String) {
+        when (val result = ipfs.swarm.connect(address)) {
+            is StringsResult.Success -> println("Connected to $address: ${result.result}")
+            is StringsResult.Failure -> println("Failed to connect to $address: ${result.errorMessage}")
+        }
+    }
+
+    fun swarmPeers() {
+        when (val swarmPeersResult = ipfs.swarm.peers()) {
+            is SwarmPeersResult.Success -> {
+                val peers = swarmPeersResult.peers
+                println("--> Connected peers: $peers")
+            }
+
+            is SwarmPeersResult.Failure -> {
+                println("--> Failed to get swarm peers: ${swarmPeersResult.errorMessage}")
+            }
         }
     }
 }

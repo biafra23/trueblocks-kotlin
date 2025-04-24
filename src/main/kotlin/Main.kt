@@ -1,11 +1,8 @@
-import com.jaeckel.trueblocks.IpfsClient
-import com.jaeckel.trueblocks.IpfsHttpClient
 import com.jaeckel.trueblocks.IpfsLocalClient
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.ipfs.kotlin.IPFS
 import io.ipfs.kotlin.IPFSConfiguration
-import org.kethereum.model.Address
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
@@ -19,28 +16,35 @@ fun main(args: Array<String>) {
     val addressToCheck =
         args.getOrNull(0)?.lowercase() ?: "0x308686553a1EAC2fE721Ac8B814De638975a276e".lowercase()
 
-    val manifestCID = "QmUBS83qjRmXmSgEvZADVv2ch47137jkgNbqfVVxQep5Y1" // version trueblocks-core@v2.0.0-release
+    val manifestCID =
+        "QmUBS83qjRmXmSgEvZADVv2ch47137jkgNbqfVVxQep5Y1" // version trueblocks-core@v2.0.0-release
 //    val ipfsClient: IpfsClient = IpfsHttpClient("https://ipfs.unchainedindex.io/ipfs/")
-    val ipfsClient: IpfsClient = IpfsLocalClient( "http://127.0.0.1:5001/api/v0/")
+    val ipfsClient = IpfsLocalClient("http://127.0.0.1:5001/api/v0/")
 
-    val manifestResponse = ipfsClient.fetchAndParseManifestUrl(manifestCID)
-    manifestResponse?.chunks?.reversed()?.forEach {
-//    manifestResponse?.chunks?.forEach {
-//        println(it)
-        val bloom = ipfsClient.fetchBloom(it.bloomHash, it.range)
+//    ipfsClient.stats()
+//     ipfsClient.swarmConnect("/dnsaddr/bitswap.pinata.cloud")
+//    ipfsClient.swarmConnect("/ip4/137.184.243.187/tcp/3000/ws/p2p/Qma8ddFEQWEU8ijWvdxXm3nxU7oHsRtCykAaVz8WUYhiKn")
+    ipfsClient.swarmPeers()
 
-        bloom?.let { bloom ->
-            if (bloom.isMemberBytes(Address(addressToCheck))) {
-                // fetch index
-                val appearances = ipfsClient.fetchIndex(cid = it.indexHash, parse = false)?.findAppearances(addressToCheck)
-                appearances?.forEach { appearance ->
-                    println("$addressToCheck \t${appearance.blockNumber} \t${appearance.txIndex}")
-                }
-            } else {
-//                print("Address not found in bloom range: ${bloom.range}\r")
-            }
-        }
-    }
+//    val manifestResponse = ipfsClient.fetchAndParseManifestUrl(manifestCID)
+//    manifestResponse?.chunks?.reversed()?.forEach {
+////    manifestResponse?.chunks?.forEach {
+////        println(it)
+//        val bloom = ipfsClient.fetchBloom(it.bloomHash, it.range)
+//
+//        bloom?.let { bloom ->
+//            if (bloom.isMemberBytes(Address(addressToCheck))) {
+//                // fetch index
+//                val appearances = ipfsClient.fetchIndex(cid = it.indexHash, parse = false)
+//                    ?.findAppearances(addressToCheck)
+//                appearances?.forEach { appearance ->
+//                    println("$addressToCheck \t${appearance.blockNumber} \t${appearance.txIndex}")
+//                }
+//            } else {
+////                print("Address not found in bloom range: ${bloom.range}\r")
+//            }
+//        }
+//    }
 
     exitProcess(0)
 }

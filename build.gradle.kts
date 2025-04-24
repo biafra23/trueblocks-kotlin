@@ -41,8 +41,7 @@ dependencies {
     implementation("com.squareup.moshi:moshi:1.9.1")
     implementation("com.squareup.moshi:moshi-kotlin:1.9.1")
 //    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.1")
-    implementation("com.github.ligi:ipfs-api-kotlin:0.15")
-
+    implementation("com.github.biafra23:ipfs-api-kotlin:peers-SNAPSHOT")
 }
 
 tasks.test {
