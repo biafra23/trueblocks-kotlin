@@ -22,8 +22,9 @@ fun main(args: Array<String>) {
     val ipfsClient = IpfsLocalClient("http://127.0.0.1:5001/api/v0/")
 
 //    ipfsClient.stats()
-//     ipfsClient.swarmConnect("/dnsaddr/bitswap.pinata.cloud")
-//    ipfsClient.swarmConnect("/ip4/137.184.243.187/tcp/3000/ws/p2p/Qma8ddFEQWEU8ijWvdxXm3nxU7oHsRtCykAaVz8WUYhiKn")
+     ipfsClient.swarmConnect("/dnsaddr/bitswap.pinata.cloud")
+     ipfsClient.swarmConnect("/dnsaddr/bitswap.pinata.cloudt")
+    ipfsClient.swarmConnect("/ip4/137.184.243.187/tcp/3000/ws/p2p/Qma8ddFEQWEU8ijWvdxXm3nxU7oHsRtCykAaVz8WUYhiKn")
     ipfsClient.swarmPeers()
 
 //    val manifestResponse = ipfsClient.fetchAndParseManifestUrl(manifestCID)

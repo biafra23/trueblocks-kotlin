@@ -2,6 +2,7 @@ package com.jaeckel.trueblocks
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+//import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.ipfs.kotlin.IPFS
 import io.ipfs.kotlin.IPFSConfiguration
 import io.ipfs.kotlin.commands.StringsResult
@@ -97,7 +98,7 @@ class IpfsLocalClient(baseUrl: String = "http://127.0.0.1:5001/api/v0/") : IpfsC
     fun swarmPeers() {
         when (val swarmPeersResult = ipfs.swarm.peers()) {
             is SwarmPeersResult.Success -> {
-                val peers = swarmPeersResult.peers
+                val peers = swarmPeersResult.peers.peers
                 println("--> Connected peers: ${peers}")
             }
 

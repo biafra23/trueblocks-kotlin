@@ -40,9 +40,8 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0") // Use the latest version
     implementation("com.squareup.moshi:moshi:1.9.1")
     implementation("com.squareup.moshi:moshi-kotlin:1.9.1")
-//    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.1")
 //    implementation("com.github.biafra23:ipfs-api-kotlin:peers-SNAPSHOT")
-    implementation("com.github.biafra23:ipfs-api-kotlin:512bc9b791")
+    implementation("com.github.biafra23:ipfs-api-kotlin:37f7dff508")
 }
 
 tasks.test {
