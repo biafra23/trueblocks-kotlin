@@ -3,6 +3,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.ipfs.kotlin.IPFS
 import io.ipfs.kotlin.IPFSConfiguration
+import org.kethereum.model.Address
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
@@ -27,25 +28,25 @@ fun main(args: Array<String>) {
     ipfsClient.swarmConnect("/ip4/137.184.243.187/tcp/3000/ws/p2p/Qma8ddFEQWEU8ijWvdxXm3nxU7oHsRtCykAaVz8WUYhiKn")
     ipfsClient.swarmPeers()
 
-//    val manifestResponse = ipfsClient.fetchAndParseManifestUrl(manifestCID)
-//    manifestResponse?.chunks?.reversed()?.forEach {
-////    manifestResponse?.chunks?.forEach {
-////        println(it)
-//        val bloom = ipfsClient.fetchBloom(it.bloomHash, it.range)
-//
-//        bloom?.let { bloom ->
-//            if (bloom.isMemberBytes(Address(addressToCheck))) {
-//                // fetch index
-//                val appearances = ipfsClient.fetchIndex(cid = it.indexHash, parse = false)
-//                    ?.findAppearances(addressToCheck)
-//                appearances?.forEach { appearance ->
-//                    println("$addressToCheck \t${appearance.blockNumber} \t${appearance.txIndex}")
-//                }
-//            } else {
-////                print("Address not found in bloom range: ${bloom.range}\r")
-//            }
-//        }
-//    }
+    val manifestResponse = ipfsClient.fetchAndParseManifestUrl(manifestCID)
+    manifestResponse?.chunks?.reversed()?.forEach {
+//    manifestResponse?.chunks?.forEach {
+//        println(it)
+        val bloom = ipfsClient.fetchBloom(it.bloomHash, it.range)
+
+        bloom?.let { bloom ->
+            if (bloom.isMemberBytes(Address(addressToCheck))) {
+                // fetch index
+                val appearances = ipfsClient.fetchIndex(cid = it.indexHash, parse = false)
+                    ?.findAppearances(addressToCheck)
+                appearances?.forEach { appearance ->
+                    println("$addressToCheck \t${appearance.blockNumber} \t${appearance.txIndex}")
+                }
+            } else {
+//                print("Address not found in bloom range: ${bloom.range}\r")
+            }
+        }
+    }
 
     exitProcess(0)
 }

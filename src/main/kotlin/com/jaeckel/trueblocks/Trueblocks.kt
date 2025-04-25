@@ -25,26 +25,21 @@ class Trueblocks {
     /**
      * Initialize the Trueblocks library by downloading the manifest and all bloom filters ca. 6.6GB of data.
      */
-    fun initializeBloomFilters(progressCallback: (() -> String)? = null) {
+    fun initializeBloomFilters(progressCallback: BloomProgressCallback? = null) {
 
         val url = ipfsBaseUrl + manifestCID
         val ipfsHttpClient = IpfsHttpClient()
         val manifestResponse = ipfsHttpClient.fetchAndParseManifestUrl(url)
 
-        manifestResponse?.chunks?.reversed()?.forEach {
-            val bloom = ipfsHttpClient.fetchBloom(it.bloomHash, it.range)
+        val numberOfChunks = manifestResponse?.chunks?.size ?: 0
+        var chunksDownloaded = 0
+        manifestResponse?.chunks?.reversed()?.forEach { chunk ->
 
-            bloom?.let { bloom ->
-//                if (bloom.isMemberBytes(Address(addressToCheck))) {
-//                    // fetch index
-//                    val appearances = ipfsHttpClient.fetchIndex(cid = it.indexHash, parse = false)?.findAppearances(addressToCheck)
-//                    appearances?.forEach { appearance ->
-//                        println("$addressToCheck \t${appearance.blockNumber} \t${appearance.txIndex}")
-//                    }
-//                } else {
-////                print("Address not found in bloom range: ${bloom.range}\r")
-//                }
-            }
+            ipfsHttpClient.fetchBloom(chunk.bloomHash, chunk.range)
+            chunksDownloaded++
+            progressCallback?.onCompletion(chunksDownloaded, numberOfChunks)
+            progressCallback?.onProgressBloomUpdate(chunk.range.toIntRange() ?: IntRange(0, 0))
+
         }
     }
 
@@ -65,10 +60,30 @@ class Trueblocks {
     }
 }
 
-interface ProgressCallback {
-    fun onProgressBloomUpdate(blockRangeChecked: IntRange)
-    fun onProgressIndexUpdate(blockRangeChecked: IntRange)
-    fun onProgressComplete()
-    fun onProgressError(error: String)
+interface BloomProgressCallback {
+    fun onManifestFetched(manifestCID: String, manifestResponse: ManifestResponse)
+    fun onProgressBloomUpdate(blockRangeFetched: IntRange)
+    fun onCompletion(x: Int, ofy: Int)
+    fun onError(error: String) // retryable
+    fun onFailure(message: String)  // final failure
+}
+
+interface IndexProgressCallback {
+    fun onProgressIndexUpdate(blockRangeFetched: IntRange)
+    fun onComplete()
+    fun onError(error: String)
 //    fun on
+}
+
+fun String.toIntRange(): IntRange? {
+    val parts = this.split("-")
+    if (parts.size != 2) {
+        return null // Invalid format
+    }
+    val start = parts[0].trim().toIntOrNull()
+    val end = parts[1].trim().toIntOrNull()
+    if (start == null || end == null) {
+        return null // Not valid integers
+    }
+    return start..end
 }

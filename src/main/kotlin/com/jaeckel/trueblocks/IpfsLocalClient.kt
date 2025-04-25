@@ -21,7 +21,7 @@ class IpfsLocalClient(baseUrl: String = "http://127.0.0.1:5001/api/v0/") : IpfsC
         .readTimeout(120, TimeUnit.SECONDS)
         .writeTimeout(15, TimeUnit.SECONDS)
         .addInterceptor(RedirectLoggingInterceptor())
-        .addInterceptor(loggingInterceptor)
+//        .addInterceptor(loggingInterceptor)
         .build()
     val moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory()) // Add support for Kotlin data classes
@@ -34,6 +34,10 @@ class IpfsLocalClient(baseUrl: String = "http://127.0.0.1:5001/api/v0/") : IpfsC
 
     override fun fetchAndParseManifestUrl(manifestCID: String): ManifestResponse? {
         try {
+           val success = ipfs.pins.add(manifestCID)
+            if (!success) {
+                println("Failed to pin manifest CID: $manifestCID")
+            }
             val manifest = ipfs.get.cat(manifestCID)
             val adapter = moshi.adapter(ManifestResponse::class.java)
             return adapter.fromJson(manifest)
@@ -46,6 +50,10 @@ class IpfsLocalClient(baseUrl: String = "http://127.0.0.1:5001/api/v0/") : IpfsC
     override fun fetchBloom(cid: String, range: String): Bloom? {
 //        println("fetchBloom: $cid")
         try {
+            val success = ipfs.pins.add(cid)
+            if (!success) {
+                println("Failed to pin manifest CID: $cid")
+            }
             val bloomBytes = ipfs.get.catBytes(cid)
             val bloom = Bloom.parseBloomBytes(bloomBytes, bloomBytes.size.toLong())
             bloom.range = range
@@ -54,12 +62,15 @@ class IpfsLocalClient(baseUrl: String = "http://127.0.0.1:5001/api/v0/") : IpfsC
             println("Exception: ${e.message}")
             return null
         }
-
     }
 
     override fun fetchIndex(cid: String, parse: Boolean): IndexParser? {
 //        println("fetchIndex: $cid")
         try {
+            val success = ipfs.pins.add(cid)
+            if (!success) {
+                println("Failed to pin manifest CID: $cid")
+            }
             val indexBytes = ipfs.get.catBytes(cid)
             val indexParser = IndexParser(indexBytes)
             if (parse) {
