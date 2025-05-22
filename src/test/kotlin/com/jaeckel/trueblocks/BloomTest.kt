@@ -2,11 +2,13 @@ package com.jaeckel.trueblocks
 
 import com.jaeckel.trueblocks.Util.Companion.loadResourceFile
 import org.kethereum.model.Address
+import org.slf4j.LoggerFactory
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BloomTest {
+    private val logger = LoggerFactory.getLogger(BloomTest::class.java)
 
     // tests insertAddress, isBitLit, getStats, addressToBits and isMemberBytes
     @Test
@@ -81,7 +83,8 @@ class BloomTest {
 
         val stats = bloom.getStats()
         assertEquals(expectedLit.size, stats.bitsLit.size)
-//        println(stats)
+        logger.debug("Stats: {}", stats)
+
 
         assertEquals(expectedLit, stats.bitsLit)
 

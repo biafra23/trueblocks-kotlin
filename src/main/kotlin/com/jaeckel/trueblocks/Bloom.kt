@@ -3,6 +3,7 @@ package com.jaeckel.trueblocks
 import org.kethereum.model.Address
 import org.komputing.khex.decode
 import org.komputing.khex.encode
+import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.nio.ByteBuffer
@@ -50,6 +51,8 @@ class Bloom(
     var count: UInt = 0u,
     var blooms: MutableList<BloomBytes> = mutableListOf()
 ) {
+    private val logger = LoggerFactory.getLogger(Bloom::class.java)
+
     companion object {
 
         fun parseBloomBytes(bytes: ByteArray, size: Long): Bloom {

@@ -21,6 +21,7 @@ publishing {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven {
         url = uri("https://jitpack.io")
@@ -40,8 +41,10 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0") // Use the latest version
     implementation("com.squareup.moshi:moshi:1.9.1")
     implementation("com.squareup.moshi:moshi-kotlin:1.9.1")
-//    implementation("com.github.biafra23:ipfs-api-kotlin:peers-SNAPSHOT")
-    implementation("com.github.biafra23:ipfs-api-kotlin:37f7dff508")
+    implementation("com.github.ligi:ipfs-api-kotlin:0.16.0-SNAPSHOT")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("org.slf4j:slf4j-api:1.7.36")
+    implementation("ch.qos.logback:logback-classic:1.2.11")
 }
 
 tasks.test {
