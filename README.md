@@ -33,3 +33,5 @@ Use either `IpfsHttpClient` or `IpfsLocalClient` to connect to the Trueblocks in
 while the IpfsLocalClient connects to a local IPFS node. The latter is recommended for decentralization reasons.
 
 See `Main.kt` for example usage
+
+For an example to use this on Android please have a look at: https://github.com/biafra23/AndroidPortal 
