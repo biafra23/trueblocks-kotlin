@@ -40,4 +40,9 @@ bin/
 
 ### http client cacheDir ###
 cacheDir/
+
+### trueblocks chifra cache ###
 mainnet/
+
+### Gradle ###
+local.properties
