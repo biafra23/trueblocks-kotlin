@@ -14,7 +14,7 @@ repositories {
 In `build.gradle.kts`:
 ```kotlin 
 dependencies {
-    implementation("com.github.biafra23:trueblocks:1.0-SNAPSHOT")
+    implementation("com.github.biafra23:trueblocks-kotlin:main-SNAPSHOT")
 }
 ```
 
