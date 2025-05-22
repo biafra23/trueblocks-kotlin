@@ -3,24 +3,18 @@
 This library aims to read and query the Trueblocks unchained index. It does not cover the generation
 of the index.
 
-# Getting Started
-
-## Prerequisites
-
 # Add trueblocks-kotlin to your Gradle project
 
-In settings.gradle.kts:
+In `settings.gradle.kts`:
 ```kotlin 
 repositories {
     maven("https://jitpack.io")
 }
 ```
-In build.gradle.kts:
+In `build.gradle.kts`:
 ```kotlin 
 dependencies {
-    implementation("com.github.biafra23:trueblocks:1.0-SNAPSHOT") {
-        exclude(group = "ch.qos.logback", module = "logback-classic")
-    }
+    implementation("com.github.biafra23:trueblocks:1.0-SNAPSHOT")
 }
 ```
 
