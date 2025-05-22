@@ -19,6 +19,10 @@ dependencies {
 ```
 
 ## Usage
+Run the tests via command line:
+```bash
+./gradlew test
+```
 
 Run Main.kt via IntelliJ or via command line:
 ```bash
