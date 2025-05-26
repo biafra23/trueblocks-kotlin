@@ -1,9 +1,26 @@
 # trueblocks-kotlin
 
-This library aims to read and query the Trueblocks unchained index. It does not cover the generation
+This library aims to read and query the [Trueblocks](https://trueblocks.io) unchained index. It does not cover the generation
 of the index.
 
-# Add trueblocks-kotlin to your Gradle project
+## Usage: Command line
+
+Run Main.kt
+```bash
+./gradlew run
+```
+Pass an address to check via:
+```bash
+./gradlew run --args="0xfffc3ead0df70e9bbe805af463814c2e6de5ae79"
+```
+Run the tests:
+```bash
+./gradlew test
+```
+
+## Usage as a library
+
+### Add trueblocks-kotlin to your Gradle project
 
 In `settings.gradle.kts`:
 ```kotlin 
@@ -17,22 +34,6 @@ dependencies {
     implementation("com.github.biafra23:trueblocks-kotlin:main-SNAPSHOT")
 }
 ```
-
-## Usage: Command line
-Run the tests via command line:
-```bash
-./gradlew test
-```
-
-Run Main.kt via IntelliJ or via command line:
-```bash
-./gradlew run
-```
-Pass an address to check via:
-```bash
-./gradlew run --args="0xfffc3ead0df70e9bbe805af463814c2e6de5ae79"
-```
-## Usage as a library
 
 Use either `IpfsHttpClient` or `IpfsLocalClient` to connect to the Trueblocks index. The `IpfsHttpClient` connects to a remote IPFS node via https, 
 while the `IpfsLocalClient` connects to a local IPFS node. The latter is recommended for decentralization reasons.
@@ -51,7 +52,7 @@ import kotlin.system.exitProcess
 ### Fetch Trueblocks Manifest
 
 <details open>
-<summary>HTTP</summary>
+<summary>Use via HTTP Gateway</summary>
 
 ```kotlin
    val manifestCID =
@@ -61,8 +62,7 @@ import kotlin.system.exitProcess
 ```
 </details>
 <details>
-<summary>IPFS</summary>
-
+<summary>Use via IPFS node</summary>
 
 ```kotlin
    val manifestCID =
