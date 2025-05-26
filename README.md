@@ -92,7 +92,7 @@ The `chunks` section of the manifest should have entries like this:
       "range": "000000000-000000000"
 }
 ```
-
+For each entry the bloomHash is the CID for the bloom filter file on IPFS. The indexHash is the corresponding index chunk file which contains the appearances. 
 
 ### Fetch Bloom filter
 
@@ -105,11 +105,13 @@ The `chunks` section of the manifest should have entries like this:
     val addressToCheck = "0x308686553a1EAC2fE721Ac8B814De638975a276e".lowercase()
     isMember = bloom.isMemberBytes(Address(addressToCheck))
 ```
+Please be aware that there might be false positives. Meaning: You get a hit on the bloom filter but there is no appearance in the index file. This is normal with bloom filters. 
 
 ### Fetch Trueblocks index chunk files and find appearances
 ```Kotlin
     val appearances = ipfsClient.fetchIndex(cid = it.indexHash, parse = false)?.findAppearances(addressToCheck)
 ```
+Each appearance contains a block number and a transaction index in that block which gives you a transaction that is relevant for your address. 
 
 See `Main.kt` for a full example
 
