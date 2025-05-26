@@ -1,6 +1,7 @@
 import com.jaeckel.trueblocks.IpfsClient
 import com.jaeckel.trueblocks.IpfsHttpClient
 import com.jaeckel.trueblocks.IpfsLocalClient
+import com.jaeckel.trueblocks.SwarmConnectResult
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.ipfs.kotlin.IPFS
@@ -21,6 +22,7 @@ fun main(args: Array<String>) {
 
     val manifestCID =
         "QmUBS83qjRmXmSgEvZADVv2ch47137jkgNbqfVVxQep5Y1" // version trueblocks-core@v2.0.0-release
+    // Use http gaetway
     val ipfsClient: IpfsClient = IpfsHttpClient("https://ipfs.unchainedindex.io/ipfs/")
 
     // Use a local IPFS node instead:
@@ -31,9 +33,13 @@ fun main(args: Array<String>) {
 //    val ipfsClient = IpfsLocalClient("http://127.0.0.1:5001/api/v0/")
 //    logger.info("Stats: ${ipfsClient.stats().bandWidth()}")  // show bandwidth stats
 //    val pinataAddress = "/dnsaddr/bitswap.pinata.cloud"
-//    val result = ipfsClient.swarmConnect(pinataAddress)
-//    logger.info("Connecting to $pinataAddress: [$result]")  // connect to pinata
-//    ipfsClient.swarmConnect("/ip4/137.184.243.187/tcp/3000/ws/p2p/Qma8ddFEQWEU8ijWvdxXm3nxU7oHsRtCykAaVz8WUYhiKn")
+//    val response = ipfsClient.swarmConnect(pinataAddress)
+//    if (response is SwarmConnectResult.Success) {
+//        logger.info("Pinata connect result: $response")
+//    } else {
+//        logger.error("Failed to connect to $pinataAddress: $response")
+//        exitProcess(1)
+//    }
 //    ipfsClient.pinLs() // list pinned CIDs
 //    ipfsClient.swarmPeers() // list connected peers
 
