@@ -37,8 +37,8 @@ Pass an address to check via:
 Use either `IpfsHttpClient` or `IpfsLocalClient` to connect to the Trueblocks index. The `IpfsHttpClient` connects to a remote IPFS node via https, 
 while the `IpfsLocalClient` connects to a local IPFS node. The latter is recommended for decentralization reasons.
 
-### Fetch Trueblocks Manifest
-imports
+### Imports
+
 ```kotlin
 import com.jaeckel.trueblocks.IpfsClient
 import com.jaeckel.trueblocks.IpfsHttpClient     // only for HTTP
@@ -47,6 +47,9 @@ import com.jaeckel.trueblocks.SwarmConnectResult
 import org.kethereum.model.Address
 import kotlin.system.exitProcess
 ```
+
+### Fetch Trueblocks Manifest
+
 <details open>
 <summary>HTTP</summary>
 
@@ -55,8 +58,6 @@ import kotlin.system.exitProcess
         "QmUBS83qjRmXmSgEvZADVv2ch47137jkgNbqfVVxQep5Y1" // version trueblocks-core@v2.0.0-release
     val ipfsClient: IpfsClient = IpfsHttpClient("https://ipfs.unchainedindex.io/ipfs/")
     val manifestResponse = ipfsClient.fetchAndParseManifestUrl(manifestCID)
-
-
 ```
 </details>
 <details>
