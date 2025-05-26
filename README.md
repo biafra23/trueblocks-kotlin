@@ -47,7 +47,7 @@ import com.jaeckel.trueblocks.SwarmConnectResult
 import org.kethereum.model.Address
 import kotlin.system.exitProcess
 ```
-<details>
+<details open>
 <summary>HTTP</summary>
 
 ```kotlin
@@ -81,7 +81,7 @@ import kotlin.system.exitProcess
 ```
 </details>
 
-The `chunks` section of the manifest should have entires like this: 
+The `chunks` section of the manifest should have entries like this: 
 ``` JSON
 {
       "bloomHash": "QmdREgbfg2kWNYLps12G8sR1tLxDBM67nNoNevcbLVWyK5",
